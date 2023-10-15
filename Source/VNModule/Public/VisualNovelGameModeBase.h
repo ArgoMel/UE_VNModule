@@ -7,5 +7,6 @@ UCLASS()
 class VNMODULE_API AVisualNovelGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+public:
+	AVisualNovelGameModeBase();
 };
