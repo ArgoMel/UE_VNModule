@@ -4,6 +4,7 @@
 #include "EngineMinimal.h"
 #include <Components/TextBlock.h>
 #include <Components/Image.h>
+#include <Components/Border.h>
 #include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
 
@@ -24,23 +25,32 @@ enum class ECharacterSetting : uint8
 	AllSpriteNotSpeaking,
 };
 
+UENUM(BlueprintType)
+enum class EVisualFX : uint8
+{
+	NoFX,
+	CamShake,
+};
+
 USTRUCT(BlueprintType)
 struct FDialogInfo : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ECharacterName CharacterName;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString DialogText;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ECharacterSetting CharacterSetting;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> BGImage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> LeftSpriteImage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> RightSpriteImage;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString DialogText;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	ECharacterName CharacterName=ECharacterName::Amanda;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	ECharacterSetting CharacterSetting=ECharacterSetting::LeftSpriteSpeaking;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	EVisualFX VisualFX = EVisualFX::NoFX;
 };
 
 template<typename T>

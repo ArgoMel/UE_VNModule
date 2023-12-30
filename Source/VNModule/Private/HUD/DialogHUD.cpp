@@ -8,12 +8,14 @@ void UDialogHUD::NativeConstruct()
     mLetterIndex = 0;
     mDialogFinished = false;
     mCanSkipDialog = false;
+    mDisableLMB = false;
 
     mCharacterNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CharacterName_Text")));
     mDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Dialog_Text")));
     mBGImage = Cast<UImage>(GetWidgetFromName(TEXT("BG_Image")));
     mLeftSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("LeftSprite_Image")));
     mRightSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("RightSprite_Image")));
+    mDialogBorder = Cast<UBorder>(GetWidgetFromName(TEXT("Dialog_Border")));
     //    m_List->OnItemClicked().AddUObject<UUW_List>(this, &UUW_List::ItemClick);
 
     RefreshData();
@@ -111,14 +113,59 @@ void UDialogHUD::SkipDialog()
     mDialogText->SetText(FText::FromString(mCurDialogText));
 }
 
+void UDialogHUD::ContinueDialog()
+{
+    ClearDialog();
+    SetNextDialogRowIndex(1);
+    RefreshData();
+    SetLetterByLetter();
+    PlayVisualFX(GetDTInfo().VisualFX);
+}
+
+void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
+{
+    switch (visualFX)
+    {
+    case EVisualFX::NoFX:
+        break;
+    case EVisualFX::CamShake:
+        mDisableLMB = true;
+        ToggleBorders(false);
+        PlayAnimation(mShakeAnim);
+        FTimerHandle clearTimer;
+        GetWorld()->GetTimerManager().SetTimer(clearTimer, this, &UDialogHUD::BordersOn, 0.4f, false);
+        break;
+    }
+}
+
+void UDialogHUD::ToggleBorders(bool bordersOn)
+{
+    if(bordersOn)
+    {
+        PlayAnimation(mFadeBordersAnim,0.f,1,EUMGSequencePlayMode::Forward,2.f);
+    }
+    else
+    {
+        mDialogBorder->SetRenderOpacity(0.f);
+    }
+}
+
+void UDialogHUD::BordersOn()
+{
+    ClearDialog();
+    ToggleBorders(true);
+    mDisableLMB = false;
+}
+
 void UDialogHUD::NextDialog()
 {
+    if(mDisableLMB)
+    {
+        return;
+    }
     if (mDialogFinished)
     {
-        ClearDialog();
-        SetNextDialogRowIndex(1);
-        RefreshData();
-        SetLetterByLetter();
+        ContinueDialog();
     }
     else
     {

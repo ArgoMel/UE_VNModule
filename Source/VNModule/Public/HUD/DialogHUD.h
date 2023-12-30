@@ -16,8 +16,14 @@ private:
 	TObjectPtr<UImage> mBGImage;
 	TObjectPtr<UImage> mLeftSpriteImage;
 	TObjectPtr<UImage> mRightSpriteImage;
+	TObjectPtr<UBorder> mDialogBorder;
 
 protected:
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> mShakeAnim;
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> mFadeBordersAnim;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	FTimerHandle mLetterTimer;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
@@ -30,6 +36,8 @@ protected:
 	bool mDialogFinished;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	bool mCanSkipDialog;
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+	bool mDisableLMB;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -49,5 +57,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SkipDialog();
 	UFUNCTION(BlueprintCallable)
+	void ContinueDialog();
+	UFUNCTION(BlueprintCallable)
+	void PlayVisualFX(EVisualFX visualFX);
+	UFUNCTION(BlueprintCallable)
+	void ToggleBorders(bool bordersOn);
+	UFUNCTION(BlueprintCallable)
+	void BordersOn();
+
+	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();
 };
