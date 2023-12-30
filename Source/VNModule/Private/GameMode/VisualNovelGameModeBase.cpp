@@ -1,4 +1,4 @@
-#include "VisualNovelGameModeBase.h"
+#include "GameMode/VisualNovelGameModeBase.h"
 #include "HUD/VisualNovelHUD.h"
 
 AVisualNovelGameModeBase::AVisualNovelGameModeBase()

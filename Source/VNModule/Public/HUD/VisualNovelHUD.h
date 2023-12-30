@@ -3,6 +3,8 @@
 #include "GameFramework/HUD.h"
 #include "VisualNovelHUD.generated.h"
 
+class UDialogHUD;
+
 UCLASS()
 class VNMODULE_API AVisualNovelHUD : public AHUD
 {
@@ -14,5 +16,5 @@ protected:
 
 private:
 	TSubclassOf<UUserWidget>	m_UIClass;
-	TObjectPtr<class UDialogHUD>	m_DialogWidget;
+	TObjectPtr<UDialogHUD>	m_DialogWidget;
 };
