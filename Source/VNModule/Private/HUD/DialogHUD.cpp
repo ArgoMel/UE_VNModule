@@ -16,7 +16,7 @@ void UDialogHUD::NativeConstruct()
     mRightSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("RightSprite_Image")));
     //    m_List->OnItemClicked().AddUObject<UUW_List>(this, &UUW_List::ItemClick);
 
-    SetHUDElements(GetDTInfo());
+    RefreshData();
     SetLetterByLetter();
 }
 
@@ -81,9 +81,7 @@ void UDialogHUD::DialogLogic()
     }
     else
     {
-        GetWorld()->GetTimerManager().ClearTimer(mLetterTimer);
-        mDialogFinished = true;
-        mCanSkipDialog = false;
+        SkipDialog();
     }
 }
 
@@ -102,4 +100,28 @@ void UDialogHUD::SetNextDialogRowIndex(int32 index)
 void UDialogHUD::RefreshData()
 {
     SetHUDElements(GetDTInfo());
+}
+
+void UDialogHUD::SkipDialog()
+{
+    GetWorld()->GetTimerManager().ClearTimer(mLetterTimer);
+    mDialogFinished = true;
+    mCanSkipDialog = false;
+    mCurDialogText = GetDTInfo().DialogText;
+    mDialogText->SetText(FText::FromString(mCurDialogText));
+}
+
+void UDialogHUD::NextDialog()
+{
+    if (mDialogFinished)
+    {
+        ClearDialog();
+        SetNextDialogRowIndex(1);
+        RefreshData();
+        SetLetterByLetter();
+    }
+    else
+    {
+        SkipDialog();
+    }
 }

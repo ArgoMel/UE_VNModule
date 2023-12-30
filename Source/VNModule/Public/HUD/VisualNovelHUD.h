@@ -17,4 +17,7 @@ protected:
 private:
 	TSubclassOf<UUserWidget>	m_UIClass;
 	TObjectPtr<UDialogHUD>	m_DialogWidget;
+
+public:
+	void NextDialog();
 };

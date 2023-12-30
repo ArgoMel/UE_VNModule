@@ -3,6 +3,8 @@
 
 AVisualNovelHUD::AVisualNovelHUD()
 {
+	PrimaryActorTick.bCanEverTick = false;
+
 	static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_DialogHUD(TEXT(
 		"/Game/VisualNovel/BluePrints/HUD/WBP_DialogHUD.WBP_DialogHUD_C"));
 	if (WBP_DialogHUD.Succeeded())
@@ -22,4 +24,9 @@ void AVisualNovelHUD::BeginPlay()
 			m_DialogWidget->AddToViewport();
 		}
 	}
+}
+
+void AVisualNovelHUD::NextDialog()
+{
+	m_DialogWidget->NextDialog();
 }

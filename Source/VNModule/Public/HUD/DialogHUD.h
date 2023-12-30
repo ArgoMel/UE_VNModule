@@ -46,4 +46,8 @@ public:
 	void SetNextDialogRowIndex(int32 index);
 	UFUNCTION(BlueprintCallable)
 	void RefreshData();
+	UFUNCTION(BlueprintCallable)
+	void SkipDialog();
+	UFUNCTION(BlueprintCallable)
+	void NextDialog();
 };

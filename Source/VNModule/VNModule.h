@@ -1,7 +1,10 @@
 #pragma once
+//#include "Engine.h"
+//#include "EngineGlobals.h"
 #include "EngineMinimal.h"
 #include <Components/TextBlock.h>
 #include <Components/Image.h>
+#include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
 
 UENUM(BlueprintType)
