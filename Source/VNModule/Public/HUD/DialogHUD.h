@@ -3,10 +3,15 @@
 #include "Blueprint/UserWidget.h"
 #include "DialogHUD.generated.h"
 
+class UChoiceButton;
+//class UChoiceButton;
+
 UCLASS()
 class VNMODULE_API UDialogHUD : public UUserWidget
 {
 	GENERATED_BODY()
+public:
+	UDialogHUD(const FObjectInitializer& ObjectInitializer);
 protected:
 	virtual void NativeConstruct();
 
@@ -17,6 +22,10 @@ private:
 	TObjectPtr<UImage> mLeftSpriteImage;
 	TObjectPtr<UImage> mRightSpriteImage;
 	TObjectPtr<UBorder> mDialogBorder;
+	//TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
+
+	TSubclassOf<UUserWidget>	mChoiceButtonClass;
+	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
 
 protected:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
@@ -38,6 +47,9 @@ protected:
 	bool mCanSkipDialog;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	bool mDisableLMB;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	int32 mButtonIndex;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -64,6 +76,10 @@ public:
 	void ToggleBorders(bool bordersOn);
 	UFUNCTION(BlueprintCallable)
 	void BordersOn();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
+	void CreateChoices();
+	void CreateChoices_Implementation();
 
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();

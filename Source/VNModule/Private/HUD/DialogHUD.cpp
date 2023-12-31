@@ -1,5 +1,18 @@
 #include "HUD/DialogHUD.h"
+#include "HUD/ChoiceButton.h"
 #include "VisualNovelGameInstance.h"
+
+UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
+        "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
+    if (WBP_ChoiceButton_C.Succeeded())
+    {
+        mChoiceButtonClass = WBP_ChoiceButton_C.Class;
+    }
+    ///Script/UMGEditor.WidgetBlueprint'/Game/VisualNovel/BluePrints/HUD/WBP_ChoicesGridPanel.WBP_ChoicesGridPanel'
+}
 
 void UDialogHUD::NativeConstruct()
 {
@@ -9,6 +22,8 @@ void UDialogHUD::NativeConstruct()
     mDialogFinished = false;
     mCanSkipDialog = false;
     mDisableLMB = false;
+
+    mButtonIndex = 0;
 
     mCharacterNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CharacterName_Text")));
     mDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Dialog_Text")));
@@ -155,6 +170,24 @@ void UDialogHUD::BordersOn()
     ClearDialog();
     ToggleBorders(true);
     mDisableLMB = false;
+}
+
+void UDialogHUD::CreateChoices_Implementation()
+{
+    FDialogInfo dialogInfo= GetDTInfo();
+    int32 size = dialogInfo.ChoicesText.Num();
+    for (int32 i = 0; i < size;++i)
+    {
+        mButtonIndex = i;
+        if (IsValid(mChoiceButtonClass))
+        {
+            mChoiceButtonWidget = CreateWidget<UChoiceButton>(GetWorld(), mChoiceButtonClass);
+            if (IsValid(mChoiceButtonWidget))
+            {
+                mChoiceButtonWidget->AddToViewport();
+            }
+        }
+    }
 }
 
 void UDialogHUD::NextDialog()

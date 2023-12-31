@@ -32,6 +32,16 @@ enum class EVisualFX : uint8
 	CamShake,
 };
 
+UENUM(BlueprintType)
+enum class EChoicesAmount : uint8
+{
+	Zero,
+	One,
+	Two,
+	Three,
+	Four,
+};
+
 USTRUCT(BlueprintType)
 struct FDialogInfo : public FTableRowBase
 {
@@ -44,6 +54,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> RightSpriteImage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> ChoicesText;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString DialogText;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	ECharacterName CharacterName=ECharacterName::Amanda;
@@ -51,6 +63,10 @@ public:
 	ECharacterSetting CharacterSetting=ECharacterSetting::LeftSpriteSpeaking;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	EVisualFX VisualFX = EVisualFX::NoFX;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	EChoicesAmount choicesAmount = EChoicesAmount::Zero;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 SelectedChoiceRowIndex = 0;
 };
 
 template<typename T>
