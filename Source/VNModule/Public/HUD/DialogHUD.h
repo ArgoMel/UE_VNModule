@@ -4,7 +4,8 @@
 #include "DialogHUD.generated.h"
 
 class UChoiceButton;
-//class UChoiceButton;
+class UChoicesGridPanel;
+class UVisualNovelGameInstance;
 
 UCLASS()
 class VNMODULE_API UDialogHUD : public UUserWidget
@@ -13,7 +14,9 @@ class VNMODULE_API UDialogHUD : public UUserWidget
 public:
 	UDialogHUD(const FObjectInitializer& ObjectInitializer);
 protected:
-	virtual void NativeConstruct();
+	//construct보다 더 빨리 실행된다.
+	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
 
 private:
 	TObjectPtr<UTextBlock> mCharacterNameText;
@@ -22,10 +25,10 @@ private:
 	TObjectPtr<UImage> mLeftSpriteImage;
 	TObjectPtr<UImage> mRightSpriteImage;
 	TObjectPtr<UBorder> mDialogBorder;
-	//TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
+	TObjectPtr<UChoicesGridPanel>	mChoiceGridPanel;
 
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
-	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
+	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
 
 protected:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
@@ -49,7 +52,13 @@ protected:
 	bool mDisableLMB;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
+	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	TArray<TObjectPtr<UChoiceButton>>	mChoiceButtonWidgets;
+	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	int32 mButtonIndex;
+	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	int32 mSelectedChoiceRowIndex;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -69,7 +78,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SkipDialog();
 	UFUNCTION(BlueprintCallable)
-	void ContinueDialog();
+	void ContinueDialog(bool hasChoice,int32 selectedIndex);
 	UFUNCTION(BlueprintCallable)
 	void PlayVisualFX(EVisualFX visualFX);
 	UFUNCTION(BlueprintCallable)
@@ -80,6 +89,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
 	void CreateChoices();
 	void CreateChoices_Implementation();
+	UFUNCTION(BlueprintCallable, Category = "Choice")
+	void SelectChoiceRowIndex(int32 selectedIndex);
 
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();

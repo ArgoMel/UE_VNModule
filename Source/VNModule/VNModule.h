@@ -1,10 +1,12 @@
 #pragma once
-//#include "Engine.h"
+#include "Engine.h"
 //#include "EngineGlobals.h"
 #include "EngineMinimal.h"
 #include <Components/TextBlock.h>
 #include <Components/Image.h>
 #include <Components/Border.h>
+#include <Components/UniformGridPanel.h>
+#include <Components/Button.h>
 #include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
 
@@ -32,16 +34,6 @@ enum class EVisualFX : uint8
 	CamShake,
 };
 
-UENUM(BlueprintType)
-enum class EChoicesAmount : uint8
-{
-	Zero,
-	One,
-	Two,
-	Three,
-	Four,
-};
-
 USTRUCT(BlueprintType)
 struct FDialogInfo : public FTableRowBase
 {
@@ -63,8 +55,6 @@ public:
 	ECharacterSetting CharacterSetting=ECharacterSetting::LeftSpriteSpeaking;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	EVisualFX VisualFX = EVisualFX::NoFX;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	EChoicesAmount choicesAmount = EChoicesAmount::Zero;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 SelectedChoiceRowIndex = 0;
 };

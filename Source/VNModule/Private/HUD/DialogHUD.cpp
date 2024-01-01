@@ -1,22 +1,11 @@
 #include "HUD/DialogHUD.h"
 #include "HUD/ChoiceButton.h"
+#include "HUD/ChoicesGridPanel.h"
 #include "VisualNovelGameInstance.h"
 
 UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
-        "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
-    if (WBP_ChoiceButton_C.Succeeded())
-    {
-        mChoiceButtonClass = WBP_ChoiceButton_C.Class;
-    }
-    ///Script/UMGEditor.WidgetBlueprint'/Game/VisualNovel/BluePrints/HUD/WBP_ChoicesGridPanel.WBP_ChoicesGridPanel'
-}
-
-void UDialogHUD::NativeConstruct()
-{
-	Super::NativeConstruct();
     mRowNumber = 1;
     mLetterIndex = 0;
     mDialogFinished = false;
@@ -24,14 +13,32 @@ void UDialogHUD::NativeConstruct()
     mDisableLMB = false;
 
     mButtonIndex = 0;
+    mSelectedChoiceRowIndex = 0;
 
+    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
+        "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
+    if (WBP_ChoiceButton_C.Succeeded())
+    {
+        mChoiceButtonClass = WBP_ChoiceButton_C.Class;
+    }
+}
+
+void UDialogHUD::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+    mGameInstance = GetWorld()->GetGameInstance<UVisualNovelGameInstance>();
+}
+
+void UDialogHUD::NativeConstruct()
+{
+	Super::NativeConstruct();
     mCharacterNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CharacterName_Text")));
     mDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Dialog_Text")));
     mBGImage = Cast<UImage>(GetWidgetFromName(TEXT("BG_Image")));
     mLeftSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("LeftSprite_Image")));
     mRightSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("RightSprite_Image")));
     mDialogBorder = Cast<UBorder>(GetWidgetFromName(TEXT("Dialog_Border")));
-    //    m_List->OnItemClicked().AddUObject<UUW_List>(this, &UUW_List::ItemClick);
+    mChoiceGridPanel = Cast<UChoicesGridPanel>(GetWidgetFromName(TEXT("WBP_ChoicesGridPanel")));
 
     RefreshData();
     SetLetterByLetter();
@@ -39,11 +46,10 @@ void UDialogHUD::NativeConstruct()
 
 FDialogInfo UDialogHUD::GetDTInfo()
 {
-    FDialogInfo dialoginfo;
-    UVisualNovelGameInstance* gameInst = GetWorld()->GetGameInstance<UVisualNovelGameInstance>();
-    if (IsValid(gameInst))
+    FDialogInfo dialoginfo;  
+    if (IsValid(mGameInstance))
     {
-        dialoginfo=*gameInst->FindDialogInfoData(*FString::FromInt(mRowNumber));
+        dialoginfo=*mGameInstance->FindDialogInfoData(*FString::FromInt(mRowNumber));
     }
     return dialoginfo;
 }
@@ -128,13 +134,22 @@ void UDialogHUD::SkipDialog()
     mDialogText->SetText(FText::FromString(mCurDialogText));
 }
 
-void UDialogHUD::ContinueDialog()
+void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
 {
     ClearDialog();
-    SetNextDialogRowIndex(1);
-    RefreshData();
-    SetLetterByLetter();
-    PlayVisualFX(GetDTInfo().VisualFX);
+    if(!hasChoice)
+    {
+        SetNextDialogRowIndex(1);
+        RefreshData();
+        SetLetterByLetter();
+        PlayVisualFX(GetDTInfo().VisualFX);
+    }
+    else
+    {
+        SelectChoiceRowIndex(selectedIndex);
+        RefreshData();
+        SetLetterByLetter();
+    }
 }
 
 void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
@@ -184,10 +199,18 @@ void UDialogHUD::CreateChoices_Implementation()
             mChoiceButtonWidget = CreateWidget<UChoiceButton>(GetWorld(), mChoiceButtonClass);
             if (IsValid(mChoiceButtonWidget))
             {
-                mChoiceButtonWidget->AddToViewport();
+                mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, mButtonIndex);
+                mChoiceButtonWidgets.Add(mChoiceButtonWidget);
+                mChoiceButtonWidget->GetChoiceText()->SetText((
+                    FText::FromString(dialogInfo.ChoicesText[mButtonIndex])));
             }
         }
     }
+}
+
+void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)
+{
+    mSelectedChoiceRowIndex = selectedIndex;
 }
 
 void UDialogHUD::NextDialog()
@@ -198,7 +221,15 @@ void UDialogHUD::NextDialog()
     }
     if (mDialogFinished)
     {
-        ContinueDialog();
+        int32 choiceCount = GetDTInfo().ChoicesText.Num();
+        if(choiceCount==0)
+        {
+            //ContinueDialog(choiceCount != 0,);
+        }
+        else
+        {
+            CreateChoices();
+        }
     }
     else
     {
