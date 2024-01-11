@@ -3,6 +3,8 @@
 #include "Blueprint/UserWidget.h"
 #include "ChoiceButton.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCallChoiceButton, int32, Index);
+
 UCLASS()
 class VNMODULE_API UChoiceButton : public UUserWidget
 {
@@ -18,8 +20,12 @@ private:
 	TObjectPtr<UTextBlock> mChoiceText;
 
 protected:
-	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	UPROPERTY(BlueprintReadWrite, Category = "Choice", Meta = (ExposeOnSpawn = true))
 	int32 mButtonIndex;
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Delegate")
+	FCallChoiceButton OnCallChoiceButton;
 
 protected:
 	UFUNCTION()

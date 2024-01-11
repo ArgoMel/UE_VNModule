@@ -1,4 +1,8 @@
 #include "HUD/ChoiceButton.h"
+#include "HUD/DialogHUD.h"
+#include "HUD/VisualNovelHUD.h"
+#include "Interface/HUDInterface.h"
+
 
 UChoiceButton::UChoiceButton(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -17,4 +21,21 @@ void UChoiceButton::NativeConstruct()
 
 void UChoiceButton::ChoiceClicked()
 {
+	OnCallChoiceButton.Broadcast(mButtonIndex);
+	AHUD* hud = UGameplayStatics::GetPlayerController(GetWorld(),0)->GetHUD();
+	if (hud->GetClass()->ImplementsInterface(UHUDInterface::StaticClass()))
+	{
+		auto interfaceVariable = Cast<IHUDInterface>(hud);
+		AVisualNovelHUD* vnHUD=interfaceVariable->GetVNHUD();
+		UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
+		dialogHUD->SetMouseCursor(false);
+		auto choiceButtons= dialogHUD->GetChoiceButtons();
+		for (auto& choiceButton : choiceButtons) 
+		{
+			choiceButton->RemoveFromParent();
+		}
+	}
 }
+
+// for Blueprint implementation
+//IGameModeInterface::Execute_GetVNGameMode(gameMode);

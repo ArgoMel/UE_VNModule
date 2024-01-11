@@ -197,21 +197,57 @@ void UDialogHUD::CreateChoices_Implementation()
         if (IsValid(mChoiceButtonClass))
         {
             mChoiceButtonWidget = CreateWidget<UChoiceButton>(GetWorld(), mChoiceButtonClass);
+            //mChoiceButtonWidget = GetWorld()->SpawnActorDeferred<UChoiceButton>
+            //    (UChoiceButton::StaticClass(), finalTransform);
+            //if (voxelActor)
+            //{
+            //    voxelActor->SetRandomSeed(m_RandomSeed);
+            //    voxelActor->SetVoxelSize(m_VoxelSize);
+            //    voxelActor->SetChunkLineElements(m_ChenkLineElements);
+            //    voxelActor->SetChunkXIndex(indexX);
+            //    voxelActor->SetChunkYIndex(indexY);
+            //    UGameplayStatics::FinishSpawningActor(voxelActor, finalTransform);
+            //}
             if (IsValid(mChoiceButtonWidget))
             {
                 mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, mButtonIndex);
                 mChoiceButtonWidgets.Add(mChoiceButtonWidget);
                 mChoiceButtonWidget->GetChoiceText()->SetText((
                     FText::FromString(dialogInfo.ChoicesText[mButtonIndex])));
+                mChoiceButtonWidget->OnCallChoiceButton.AddDynamic(this, &UDialogHUD::ClickChoice);
             }
         }
     }
+}
+
+void UDialogHUD::ClickChoice_Implementation(int32 index)
+{
+    int32 choiceindex=GetDTInfo().SelectedChoiceRowIndex[index];
+    ContinueDialog(true, choiceindex);
 }
 
 void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)
 {
     mSelectedChoiceRowIndex = selectedIndex;
 }
+
+void UDialogHUD::SetMouseCursor(bool showMouse)
+{
+    APlayerController* controller= UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    controller->bShowMouseCursor = showMouse;
+    if(showMouse)
+    {
+        FInputModeUIOnly inputMode;
+        controller->SetInputMode(inputMode);
+    }
+    else
+    {
+        ;
+        FInputModeGameOnly inputMode;
+        controller->SetInputMode(inputMode);
+    }
+}
+
 
 void UDialogHUD::NextDialog()
 {
@@ -221,10 +257,9 @@ void UDialogHUD::NextDialog()
     }
     if (mDialogFinished)
     {
-        int32 choiceCount = GetDTInfo().ChoicesText.Num();
-        if(choiceCount==0)
+        if(GetDTInfo().ChoicesText.IsEmpty())
         {
-            //ContinueDialog(choiceCount != 0,);
+            ContinueDialog(false);
         }
         else
         {

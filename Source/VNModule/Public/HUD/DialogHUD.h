@@ -78,7 +78,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SkipDialog();
 	UFUNCTION(BlueprintCallable)
-	void ContinueDialog(bool hasChoice,int32 selectedIndex);
+	void ContinueDialog(bool hasChoice,int32 selectedIndex=0);
 	UFUNCTION(BlueprintCallable)
 	void PlayVisualFX(EVisualFX visualFX);
 	UFUNCTION(BlueprintCallable)
@@ -89,9 +89,19 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
 	void CreateChoices();
 	void CreateChoices_Implementation();
+	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
+	void ClickChoice(int32 index);
+	void ClickChoice_Implementation(int32 index);
 	UFUNCTION(BlueprintCallable, Category = "Choice")
 	void SelectChoiceRowIndex(int32 selectedIndex);
+	
+	void SetMouseCursor(bool showMouse);
 
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();
+
+	TArray<TObjectPtr<UChoiceButton>> GetChoiceButtons()
+	{
+		return mChoiceButtonWidgets;
+	}
 };

@@ -1,7 +1,5 @@
 #pragma once
 #include "Engine.h"
-//#include "EngineGlobals.h"
-#include "EngineMinimal.h"
 #include <Components/TextBlock.h>
 #include <Components/Image.h>
 #include <Components/Border.h>
@@ -9,6 +7,9 @@
 #include <Components/Button.h>
 #include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTestDelegate);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCallChoiceButton, int32, Index);
 
 UENUM(BlueprintType)
 enum class ECharacterName : uint8
@@ -48,6 +49,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> ChoicesText;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<int32> SelectedChoiceRowIndex;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString DialogText;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	ECharacterName CharacterName=ECharacterName::Amanda;
@@ -55,8 +58,6 @@ public:
 	ECharacterSetting CharacterSetting=ECharacterSetting::LeftSpriteSpeaking;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	EVisualFX VisualFX = EVisualFX::NoFX;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int32 SelectedChoiceRowIndex = 0;
 };
 
 template<typename T>

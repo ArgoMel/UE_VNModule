@@ -9,24 +9,29 @@ AVisualNovelHUD::AVisualNovelHUD()
 		"/Game/VisualNovel/BluePrints/HUD/WBP_DialogHUD.WBP_DialogHUD_C"));
 	if (WBP_DialogHUD.Succeeded())
 	{
-		m_UIClass = WBP_DialogHUD.Class;
+		mUIClass = WBP_DialogHUD.Class;
 	}
 }
 
 void AVisualNovelHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	if (IsValid(m_UIClass))
+	if (IsValid(mUIClass))
 	{
-		m_DialogWidget = CreateWidget<UDialogHUD>(GetWorld(), m_UIClass);
-		if (IsValid(m_DialogWidget))
+		mDialogWidget = CreateWidget<UDialogHUD>(GetWorld(), mUIClass);
+		if (IsValid(mDialogWidget))
 		{
-			m_DialogWidget->AddToViewport();
+			mDialogWidget->AddToViewport();
 		}
 	}
 }
 
+AVisualNovelHUD* AVisualNovelHUD::GetVNHUD_Implementation()
+{
+	return this;
+}
+
 void AVisualNovelHUD::NextDialog()
 {
-	m_DialogWidget->NextDialog();
+	mDialogWidget->NextDialog();
 }
