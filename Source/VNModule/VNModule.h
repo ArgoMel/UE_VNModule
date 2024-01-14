@@ -5,6 +5,7 @@
 #include <Components/Border.h>
 #include <Components/UniformGridPanel.h>
 #include <Components/Button.h>
+#include <Components/Throbber.h>
 #include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
 
@@ -35,6 +36,26 @@ enum class EVisualFX : uint8
 	CamShake,
 };
 
+UENUM(BlueprintType)
+enum class EDialogState : uint8
+{
+	None,
+	Typing,
+	FinishedTyping,
+	Choice,
+};
+
+USTRUCT(BlueprintType)
+struct FChoiceInfo : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString ChoicesText;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 SelectedChoiceRowIndex;
+};
+
 USTRUCT(BlueprintType)
 struct FDialogInfo : public FTableRowBase
 {
@@ -47,17 +68,22 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> RightSpriteImage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> ChoicesText;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<int32> SelectedChoiceRowIndex;
+	TArray<FChoiceInfo> ChoiceInfo;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString DialogText;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ECharacterName CharacterName=ECharacterName::Amanda;
+	ECharacterName CharacterName;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ECharacterSetting CharacterSetting=ECharacterSetting::LeftSpriteSpeaking;
+	ECharacterSetting CharacterSetting;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	EVisualFX VisualFX = EVisualFX::NoFX;
+	EVisualFX VisualFX;
+
+	FDialogInfo() 
+	{
+		CharacterName = ECharacterName::Amanda;
+		CharacterSetting = ECharacterSetting::LeftSpriteSpeaking;
+		VisualFX = EVisualFX::NoFX;
+	}
 };
 
 template<typename T>

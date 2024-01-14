@@ -21,11 +21,13 @@ protected:
 private:
 	TObjectPtr<UTextBlock> mCharacterNameText;
 	TObjectPtr<UTextBlock> mDialogText;
+	TObjectPtr<UTextBlock> mContinueText;
 	TObjectPtr<UImage> mBGImage;
 	TObjectPtr<UImage> mLeftSpriteImage;
 	TObjectPtr<UImage> mRightSpriteImage;
 	TObjectPtr<UBorder> mDialogBorder;
 	TObjectPtr<UChoicesGridPanel>	mChoiceGridPanel;
+	TObjectPtr<UThrobber>	mTypingThrobber;
 
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
@@ -35,11 +37,15 @@ protected:
 	TObjectPtr<UWidgetAnimation> mShakeAnim;
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	TObjectPtr<UWidgetAnimation> mFadeBordersAnim;
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> mFadeContinueTextAnim;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	FTimerHandle mLetterTimer;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	FString mCurDialogText;
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+	EDialogState mDialogState;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	int32 mRowNumber;
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
@@ -52,13 +58,15 @@ protected:
 	bool mDisableLMB;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
-	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
-	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	TArray<TObjectPtr<UChoiceButton>>	mChoiceButtonWidgets;
+	UPROPERTY(BlueprintReadWrite, Category = "Choice")
+	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly,Category = "Choice")
+	TObjectPtr<USoundBase>	mChoiceSound;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	int32 mButtonIndex;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
-	int32 mSelectedChoiceRowIndex;
+	bool mIsChoiceTriggered;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -85,6 +93,8 @@ public:
 	void ToggleBorders(bool bordersOn);
 	UFUNCTION(BlueprintCallable)
 	void BordersOn();
+	UFUNCTION(BlueprintCallable)
+	void ToggleDialogState(EDialogState state);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
 	void CreateChoices();

@@ -6,6 +6,7 @@
 UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
+    mDialogState = EDialogState::None;
     mRowNumber = 1;
     mLetterIndex = 0;
     mDialogFinished = false;
@@ -13,7 +14,7 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     mDisableLMB = false;
 
     mButtonIndex = 0;
-    mSelectedChoiceRowIndex = 0;
+    mIsChoiceTriggered = false;
 
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
         "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
@@ -21,6 +22,7 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     {
         mChoiceButtonClass = WBP_ChoiceButton_C.Class;
     }
+    ///Script/Engine.SoundCue'/Game/VisualNovel/Sounds/SFX/SC_Keys.SC_Keys'
 }
 
 void UDialogHUD::NativeOnInitialized()
@@ -34,14 +36,19 @@ void UDialogHUD::NativeConstruct()
 	Super::NativeConstruct();
     mCharacterNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CharacterName_Text")));
     mDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Dialog_Text")));
+    mContinueText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Continue_Text")));
     mBGImage = Cast<UImage>(GetWidgetFromName(TEXT("BG_Image")));
     mLeftSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("LeftSprite_Image")));
     mRightSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("RightSprite_Image")));
     mDialogBorder = Cast<UBorder>(GetWidgetFromName(TEXT("Dialog_Border")));
     mChoiceGridPanel = Cast<UChoicesGridPanel>(GetWidgetFromName(TEXT("WBP_ChoicesGridPanel")));
+    mTypingThrobber = Cast<UThrobber>(GetWidgetFromName(TEXT("Typing_Throbber")));
 
+    SetMouseCursor(false);
     RefreshData();
     SetLetterByLetter();
+    ToggleDialogState(EDialogState::Typing);
+    PlayAnimation(mFadeContinueTextAnim,0.f,0,EUMGSequencePlayMode::Forward,0.5f);
 }
 
 FDialogInfo UDialogHUD::GetDTInfo()
@@ -101,6 +108,7 @@ void UDialogHUD::DialogLogic()
         ++mLetterIndex;
         mDialogFinished = false;
         mCanSkipDialog = true;
+        ToggleDialogState(EDialogState::Typing);
     }
     else
     {
@@ -132,6 +140,15 @@ void UDialogHUD::SkipDialog()
     mCanSkipDialog = false;
     mCurDialogText = GetDTInfo().DialogText;
     mDialogText->SetText(FText::FromString(mCurDialogText));
+    ToggleDialogState(EDialogState::FinishedTyping);
+    //if(GetDTInfo().ChoiceInfo.IsEmpty())
+    //{
+    //    ToggleDialogState(EDialogState::FinishedTyping);
+    //}
+    //else if(!mIsChoiceTriggered)
+    //{
+    //    ToggleDialogState(EDialogState::FinishedTyping);
+    //}
 }
 
 void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
@@ -187,33 +204,68 @@ void UDialogHUD::BordersOn()
     mDisableLMB = false;
 }
 
+void UDialogHUD::ToggleDialogState(EDialogState state)
+{
+    if(mDialogState==state)
+    {
+        return;
+    }
+    FSlateBrush brush = mTypingThrobber->GetImage();
+    FString text=(TEXT("클릭!"));
+    switch (state)
+    {
+    case EDialogState::Typing:
+        mTypingThrobber->SetAnimateHorizontally(true);
+        mTypingThrobber->SetAnimateOpacity(true);
+        mTypingThrobber->SetAnimateVertically(true);
+        mTypingThrobber->SetNumberOfPieces(3);
+        brush.TintColor = FLinearColor::Yellow;
+        mContinueText->SetVisibility(ESlateVisibility::Collapsed);
+        break;
+    case EDialogState::FinishedTyping:
+        mTypingThrobber->SetAnimateHorizontally(false);
+        mTypingThrobber->SetAnimateOpacity(false);
+        mTypingThrobber->SetAnimateVertically(false);
+        mTypingThrobber->SetNumberOfPieces(1);
+        brush.TintColor = FLinearColor::Blue;
+        mContinueText->SetVisibility(ESlateVisibility::Visible);
+        //mContinueText->SetText(FText::FromString(text));
+        mContinueText->SetText(FText::FromName(TEXT("클릭!")));
+        break;
+    case EDialogState::Choice:
+        mTypingThrobber->SetAnimateHorizontally(false);
+        mTypingThrobber->SetAnimateOpacity(false);
+        mTypingThrobber->SetAnimateVertically(false);
+        mTypingThrobber->SetNumberOfPieces(1);
+        brush.TintColor = FLinearColor::Red;
+        mContinueText->SetVisibility(ESlateVisibility::Visible);
+        mContinueText->SetText(FText::FromString(text));
+        break;
+    }
+    mTypingThrobber->SetImage(brush);
+    mDialogState = state;
+}
+
 void UDialogHUD::CreateChoices_Implementation()
 {
-    FDialogInfo dialogInfo= GetDTInfo();
-    int32 size = dialogInfo.ChoicesText.Num();
+    mIsChoiceTriggered = true;
+    ToggleDialogState(EDialogState::Choice);
+    SetMouseCursor(true);
+    TArray<FChoiceInfo> choiceInfo= GetDTInfo().ChoiceInfo;
+    int32 size = choiceInfo.Num();
     for (int32 i = 0; i < size;++i)
     {
         mButtonIndex = i;
         if (IsValid(mChoiceButtonClass))
         {
             mChoiceButtonWidget = CreateWidget<UChoiceButton>(GetWorld(), mChoiceButtonClass);
-            //mChoiceButtonWidget = GetWorld()->SpawnActorDeferred<UChoiceButton>
-            //    (UChoiceButton::StaticClass(), finalTransform);
-            //if (voxelActor)
-            //{
-            //    voxelActor->SetRandomSeed(m_RandomSeed);
-            //    voxelActor->SetVoxelSize(m_VoxelSize);
-            //    voxelActor->SetChunkLineElements(m_ChenkLineElements);
-            //    voxelActor->SetChunkXIndex(indexX);
-            //    voxelActor->SetChunkYIndex(indexY);
-            //    UGameplayStatics::FinishSpawningActor(voxelActor, finalTransform);
-            //}
             if (IsValid(mChoiceButtonWidget))
             {
+                mChoiceButtonWidget->SetButtonIndex(mButtonIndex);
                 mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, mButtonIndex);
                 mChoiceButtonWidgets.Add(mChoiceButtonWidget);
                 mChoiceButtonWidget->GetChoiceText()->SetText((
-                    FText::FromString(dialogInfo.ChoicesText[mButtonIndex])));
+                    FText::FromString(choiceInfo[mButtonIndex].ChoicesText)));
                 mChoiceButtonWidget->OnCallChoiceButton.AddDynamic(this, &UDialogHUD::ClickChoice);
             }
         }
@@ -222,13 +274,19 @@ void UDialogHUD::CreateChoices_Implementation()
 
 void UDialogHUD::ClickChoice_Implementation(int32 index)
 {
-    int32 choiceindex=GetDTInfo().SelectedChoiceRowIndex[index];
+    mIsChoiceTriggered = false;
+    if(IsValid(mChoiceSound))
+    {
+        PlaySound(mChoiceSound);
+    }
+    ToggleDialogState(EDialogState::Typing);
+    int32 choiceindex=GetDTInfo().ChoiceInfo[index].SelectedChoiceRowIndex;
     ContinueDialog(true, choiceindex);
 }
 
 void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)
 {
-    mSelectedChoiceRowIndex = selectedIndex;
+    mRowNumber = selectedIndex;
 }
 
 void UDialogHUD::SetMouseCursor(bool showMouse)
@@ -248,7 +306,6 @@ void UDialogHUD::SetMouseCursor(bool showMouse)
     }
 }
 
-
 void UDialogHUD::NextDialog()
 {
     if(mDisableLMB)
@@ -257,7 +314,8 @@ void UDialogHUD::NextDialog()
     }
     if (mDialogFinished)
     {
-        if(GetDTInfo().ChoicesText.IsEmpty())
+        ToggleDialogState(EDialogState::Typing);
+        if(GetDTInfo().ChoiceInfo.IsEmpty())
         {
             ContinueDialog(false);
         }

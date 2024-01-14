@@ -26,7 +26,8 @@ void UChoiceButton::ChoiceClicked()
 	if (hud->GetClass()->ImplementsInterface(UHUDInterface::StaticClass()))
 	{
 		auto interfaceVariable = Cast<IHUDInterface>(hud);
-		AVisualNovelHUD* vnHUD=interfaceVariable->GetVNHUD();
+		//AVisualNovelHUD* vnHUD=interfaceVariable->GetVNHUD();
+		AVisualNovelHUD* vnHUD=interfaceVariable->Execute_GetVNHUD(hud);
 		UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
 		dialogHUD->SetMouseCursor(false);
 		auto choiceButtons= dialogHUD->GetChoiceButtons();
@@ -36,6 +37,3 @@ void UChoiceButton::ChoiceClicked()
 		}
 	}
 }
-
-// for Blueprint implementation
-//IGameModeInterface::Execute_GetVNGameMode(gameMode);

@@ -36,4 +36,8 @@ public:
 	{
 		return mChoiceText;
 	}
+	void SetButtonIndex(int32 index)
+	{
+		mButtonIndex=index;
+	}
 };
