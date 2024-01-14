@@ -1,4 +1,4 @@
-#include "HUD/DialogHUD.h"
+ï»¿#include "HUD/DialogHUD.h"
 #include "HUD/ChoiceButton.h"
 #include "HUD/ChoicesGridPanel.h"
 #include "VisualNovelGameInstance.h"
@@ -211,7 +211,8 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         return;
     }
     FSlateBrush brush = mTypingThrobber->GetImage();
-    FString text=(TEXT("Å¬¸¯!"));
+    FString text=TEXT("í´ë¦­!");
+    FName name= FName(TEXT("í´ë¦­!"));
     switch (state)
     {
     case EDialogState::Typing:
@@ -229,8 +230,6 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Blue;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
-        //mContinueText->SetText(FText::FromString(text));
-        mContinueText->SetText(FText::FromName(TEXT("Å¬¸¯!")));
         break;
     case EDialogState::Choice:
         mTypingThrobber->SetAnimateHorizontally(false);
@@ -239,9 +238,9 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Red;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
-        mContinueText->SetText(FText::FromString(text));
         break;
     }
+    mContinueText->SetText(FText::FromName(name));
     mTypingThrobber->SetImage(brush);
     mDialogState = state;
 }
