@@ -22,7 +22,48 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     {
         mChoiceButtonClass = WBP_ChoiceButton_C.Class;
     }
-    ///Script/Engine.SoundCue'/Game/VisualNovel/Sounds/SFX/SC_Keys.SC_Keys'
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_HighPitch(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_HighPitch.SW_HighPitch'"));
+    if (SW_HighPitch.Succeeded())
+    {
+        mShakeSound.Add(SW_HighPitch.Object);
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_LowPitch(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_LowPitch.SW_LowPitch'"));
+    if (SW_LowPitch.Succeeded())
+    {
+        mShakeSound.Add(SW_LowPitch.Object);
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Choices(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_Choices.SW_Choices'"));
+    if (SW_Choices.Succeeded())
+    {
+        mChoiceSound = SW_Choices.Object;
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Skip(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_Skip.SW_Skip'"));
+    if (SW_Skip.Succeeded())
+    {
+        mSkipSound = SW_Skip.Object;
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase> SW_BG(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_BG.SW_BG'"));
+    if (SW_BG.Succeeded())
+    {
+        mBGSound = SW_BG.Object;
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Music(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/Music/SW_Music.SW_Music'"));
+    if (SW_Music.Succeeded())
+    {
+        mMusicSound = SW_Music.Object;
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SC_Keys(TEXT(
+        "/Script/Engine.SoundCue'/Game/VisualNovel/Sounds/SFX/SC_Keys.SC_Keys'"));
+    if (SC_Keys.Succeeded())
+    {
+        mLetterSound = SC_Keys.Object;
+    }
 }
 
 void UDialogHUD::NativeOnInitialized()
@@ -49,6 +90,14 @@ void UDialogHUD::NativeConstruct()
     SetLetterByLetter();
     ToggleDialogState(EDialogState::Typing);
     PlayAnimation(mFadeContinueTextAnim,0.f,0,EUMGSequencePlayMode::Forward,0.5f);
+    if (IsValid(mBGSound))
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
+    }
+    if (IsValid(mMusicSound))
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
+    }
 }
 
 FDialogInfo UDialogHUD::GetDTInfo()
@@ -109,6 +158,10 @@ void UDialogHUD::DialogLogic()
         mDialogFinished = false;
         mCanSkipDialog = true;
         ToggleDialogState(EDialogState::Typing);
+        if (IsValid(mLetterSound))
+        {
+            UGameplayStatics::PlaySound2D(GetWorld(), mLetterSound);
+        }
     }
     else
     {
@@ -141,6 +194,10 @@ void UDialogHUD::SkipDialog()
     mCurDialogText = GetDTInfo().DialogText;
     mDialogText->SetText(FText::FromString(mCurDialogText));
     ToggleDialogState(EDialogState::FinishedTyping);
+    if (IsValid(mSkipSound))
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
+    }
     //if(GetDTInfo().ChoiceInfo.IsEmpty())
     //{
     //    ToggleDialogState(EDialogState::FinishedTyping);
@@ -157,16 +214,14 @@ void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
     if(!hasChoice)
     {
         SetNextDialogRowIndex(1);
-        RefreshData();
-        SetLetterByLetter();
-        PlayVisualFX(GetDTInfo().VisualFX);
     }
     else
     {
         SelectChoiceRowIndex(selectedIndex);
-        RefreshData();
-        SetLetterByLetter();
     }
+    RefreshData();
+    SetLetterByLetter();
+    PlayVisualFX(GetDTInfo().VisualFX);
 }
 
 void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
@@ -178,6 +233,13 @@ void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
     case EVisualFX::CamShake:
         mDisableLMB = true;
         ToggleBorders(false);
+        for(auto& shakeSound : mShakeSound)
+        {
+            if (IsValid(shakeSound))
+            {
+                UGameplayStatics::PlaySound2D(GetWorld(), shakeSound);
+            }
+        }
         PlayAnimation(mShakeAnim);
         FTimerHandle clearTimer;
         GetWorld()->GetTimerManager().SetTimer(clearTimer, this, &UDialogHUD::BordersOn, 0.4f, false);
@@ -211,8 +273,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         return;
     }
     FSlateBrush brush = mTypingThrobber->GetImage();
-    FString text=TEXT("클릭!");
-    FName name= FName(TEXT("클릭!"));
+    FName name;
     switch (state)
     {
     case EDialogState::Typing:
@@ -230,6 +291,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Blue;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
+        name = FName(TEXT("클릭!"));
         break;
     case EDialogState::Choice:
         mTypingThrobber->SetAnimateHorizontally(false);
@@ -238,6 +300,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Red;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
+        name = FName(TEXT("선택중..."));
         break;
     }
     mContinueText->SetText(FText::FromName(name));
@@ -276,7 +339,7 @@ void UDialogHUD::ClickChoice_Implementation(int32 index)
     mIsChoiceTriggered = false;
     if(IsValid(mChoiceSound))
     {
-        PlaySound(mChoiceSound);
+        UGameplayStatics::PlaySound2D(GetWorld(), mChoiceSound);
     }
     ToggleDialogState(EDialogState::Typing);
     int32 choiceindex=GetDTInfo().ChoiceInfo[index].SelectedChoiceRowIndex;

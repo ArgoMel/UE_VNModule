@@ -61,12 +61,23 @@ protected:
 	TArray<TObjectPtr<UChoiceButton>>	mChoiceButtonWidgets;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly,Category = "Choice")
-	TObjectPtr<USoundBase>	mChoiceSound;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	int32 mButtonIndex;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	bool mIsChoiceTriggered;
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TArray<TObjectPtr<USoundBase>>	mShakeSound;
+    UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+    TObjectPtr<USoundBase>	mChoiceSound;
+    UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+    TObjectPtr<USoundBase>	mSkipSound;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase>	mBGSound;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase>	mMusicSound;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase>	mLetterSound;
 
 public:
 	UFUNCTION(BlueprintCallable)
