@@ -120,19 +120,23 @@ void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
     {
     case ECharacterSetting::LeftSpriteSpeaking:
         mLeftSpriteImage->SetRenderOpacity(1.f);
-        mRightSpriteImage->SetRenderOpacity(0.8f);
+        mRightSpriteImage->SetRenderOpacity(1.f);
+        SetCharacterSettings(true);
         break;
     case ECharacterSetting::RightSpriteSpeaking:
-        mLeftSpriteImage->SetRenderOpacity(0.8f);
+        mLeftSpriteImage->SetRenderOpacity(1.f);
         mRightSpriteImage->SetRenderOpacity(1.f);
+        SetCharacterSettings(false);
         break;
     case ECharacterSetting::LeftSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(0.f);
         mRightSpriteImage->SetRenderOpacity(1.f);
+        SetCharacterSettings(false);
         break;
     case ECharacterSetting::RightSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(1.f);
         mRightSpriteImage->SetRenderOpacity(0.f);
+        SetCharacterSettings(true);
         break;
     case ECharacterSetting::AllSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(0.f);
@@ -274,6 +278,22 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
     mContinueText->SetText(FText::FromName(name));
     mTypingThrobber->SetImage(brush);
     mDialogState = state;
+}
+
+void UDialogHUD::SetCharacterSettings(bool bIsLeftSpriteHighlighted)
+{
+    if(bIsLeftSpriteHighlighted)
+    {
+        mLeftSpriteImage->SetBrushTintColor(FLinearColor::White);
+        mRightSpriteImage->SetBrushTintColor(FLinearColor(0.4f,0.4f,0.4f));
+        mCharacterNameText->SetColorAndOpacity(FLinearColor(0.85f,0.04f,0.07f));
+    }
+    else
+    {
+        mLeftSpriteImage->SetBrushTintColor(FLinearColor(0.4f, 0.4f, 0.4f));
+        mRightSpriteImage->SetBrushTintColor(FLinearColor::White);
+        mCharacterNameText->SetColorAndOpacity(FLinearColor(0.9f, 0.4f, 0.35f));
+    }
 }
 
 void UDialogHUD::CreateChoices_Implementation()

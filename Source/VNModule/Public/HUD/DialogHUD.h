@@ -104,6 +104,8 @@ public:
 	void BordersOn();
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void ToggleDialogState(EDialogState state);
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	void SetCharacterSettings(bool bIsLeftSpriteHighlighted);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
 	void CreateChoices();
