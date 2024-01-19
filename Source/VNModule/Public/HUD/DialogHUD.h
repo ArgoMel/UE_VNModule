@@ -80,31 +80,29 @@ protected:
 	TObjectPtr<USoundBase>	mLetterSound;
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintPure, Category = "Dialog")
 	FDialogInfo GetDTInfo();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void SetHUDElements(FDialogInfo dialogInfo);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void SetLetterByLetter();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void DialogLogic();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void ClearDialog();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void SetNextDialogRowIndex(int32 index);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void RefreshData();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void SkipDialog();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void ContinueDialog(bool hasChoice,int32 selectedIndex=0);
-	UFUNCTION(BlueprintCallable)
-	void PlayVisualFX(EVisualFX visualFX);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void ToggleBorders(bool bordersOn);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void BordersOn();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void ToggleDialogState(EDialogState state);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
@@ -116,7 +114,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Choice")
 	void SelectChoiceRowIndex(int32 selectedIndex);
 	
-	void SetMouseCursor(bool showMouse);
+	UFUNCTION(BlueprintCallable, Category = "VFX")
+	void PlayVisualFX(EVisualFX visualFX);
 
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();

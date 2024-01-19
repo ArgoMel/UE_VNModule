@@ -85,7 +85,6 @@ void UDialogHUD::NativeConstruct()
     mChoiceGridPanel = Cast<UChoicesGridPanel>(GetWidgetFromName(TEXT("WBP_ChoicesGridPanel")));
     mTypingThrobber = Cast<UThrobber>(GetWidgetFromName(TEXT("Typing_Throbber")));
 
-    SetMouseCursor(false);
     RefreshData();
     SetLetterByLetter();
     ToggleDialogState(EDialogState::Typing);
@@ -113,7 +112,7 @@ FDialogInfo UDialogHUD::GetDTInfo()
 void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
 {
     mCharacterNameText->SetText(FText::FromString(EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
-    mDialogText->SetText(FText::FromString(dialogInfo.DialogText));
+    //mDialogText->SetText(FText::FromString(dialogInfo.DialogText));
     mBGImage->SetBrushFromTexture(dialogInfo.BGImage);
     mLeftSpriteImage->SetBrushFromTexture(dialogInfo.LeftSpriteImage);
     mRightSpriteImage->SetBrushFromTexture(dialogInfo.RightSpriteImage);
@@ -127,15 +126,15 @@ void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
         mLeftSpriteImage->SetRenderOpacity(0.8f);
         mRightSpriteImage->SetRenderOpacity(1.f);
         break;
-    case ECharacterSetting::LeftSpriteNotSpeaking:
+    case ECharacterSetting::LeftSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(0.f);
         mRightSpriteImage->SetRenderOpacity(1.f);
         break;
-    case ECharacterSetting::RightSpriteNotSpeaking:
+    case ECharacterSetting::RightSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(1.f);
         mRightSpriteImage->SetRenderOpacity(0.f);
         break;
-    case ECharacterSetting::AllSpriteNotSpeaking:
+    case ECharacterSetting::AllSpriteHidden:
         mLeftSpriteImage->SetRenderOpacity(0.f);
         mRightSpriteImage->SetRenderOpacity(0.f);
         break;
@@ -198,14 +197,6 @@ void UDialogHUD::SkipDialog()
     {
         UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
     }
-    //if(GetDTInfo().ChoiceInfo.IsEmpty())
-    //{
-    //    ToggleDialogState(EDialogState::FinishedTyping);
-    //}
-    //else if(!mIsChoiceTriggered)
-    //{
-    //    ToggleDialogState(EDialogState::FinishedTyping);
-    //}
 }
 
 void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
@@ -222,29 +213,6 @@ void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
     RefreshData();
     SetLetterByLetter();
     PlayVisualFX(GetDTInfo().VisualFX);
-}
-
-void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
-{
-    switch (visualFX)
-    {
-    case EVisualFX::NoFX:
-        break;
-    case EVisualFX::CamShake:
-        mDisableLMB = true;
-        ToggleBorders(false);
-        for(auto& shakeSound : mShakeSound)
-        {
-            if (IsValid(shakeSound))
-            {
-                UGameplayStatics::PlaySound2D(GetWorld(), shakeSound);
-            }
-        }
-        PlayAnimation(mShakeAnim);
-        FTimerHandle clearTimer;
-        GetWorld()->GetTimerManager().SetTimer(clearTimer, this, &UDialogHUD::BordersOn, 0.4f, false);
-        break;
-    }
 }
 
 void UDialogHUD::ToggleBorders(bool bordersOn)
@@ -312,7 +280,6 @@ void UDialogHUD::CreateChoices_Implementation()
 {
     mIsChoiceTriggered = true;
     ToggleDialogState(EDialogState::Choice);
-    SetMouseCursor(true);
     TArray<FChoiceInfo> choiceInfo= GetDTInfo().ChoiceInfo;
     int32 size = choiceInfo.Num();
     for (int32 i = 0; i < size;++i)
@@ -351,20 +318,26 @@ void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)
     mRowNumber = selectedIndex;
 }
 
-void UDialogHUD::SetMouseCursor(bool showMouse)
+void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
 {
-    APlayerController* controller= UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    controller->bShowMouseCursor = showMouse;
-    if(showMouse)
+    switch (visualFX)
     {
-        FInputModeUIOnly inputMode;
-        controller->SetInputMode(inputMode);
-    }
-    else
-    {
-        ;
-        FInputModeGameOnly inputMode;
-        controller->SetInputMode(inputMode);
+    case EVisualFX::NoFX:
+        break;
+    case EVisualFX::CamShake:
+        mDisableLMB = true;
+        ToggleBorders(false);
+        for (auto& shakeSound : mShakeSound)
+        {
+            if (IsValid(shakeSound))
+            {
+                UGameplayStatics::PlaySound2D(GetWorld(), shakeSound);
+            }
+        }
+        PlayAnimation(mShakeAnim);
+        FTimerHandle clearTimer;
+        GetWorld()->GetTimerManager().SetTimer(clearTimer, this, &UDialogHUD::BordersOn, 0.4f, false);
+        break;
     }
 }
 

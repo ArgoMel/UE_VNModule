@@ -24,9 +24,9 @@ enum class ECharacterSetting : uint8
 {
 	LeftSpriteSpeaking,
 	RightSpriteSpeaking,
-	LeftSpriteNotSpeaking,
-	RightSpriteNotSpeaking,
-	AllSpriteNotSpeaking,
+	LeftSpriteHidden,
+	RightSpriteHidden,
+	AllSpriteHidden,
 };
 
 UENUM(BlueprintType)

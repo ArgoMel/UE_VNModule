@@ -29,7 +29,7 @@ void UChoiceButton::ChoiceClicked()
 		//AVisualNovelHUD* vnHUD=interfaceVariable->GetVNHUD();
 		AVisualNovelHUD* vnHUD=interfaceVariable->Execute_GetVNHUD(hud);
 		UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
-		dialogHUD->SetMouseCursor(false);
+		//dialogHUD->SetMouseCursor(false);
 		auto choiceButtons= dialogHUD->GetChoiceButtons();
 		for (auto& choiceButton : choiceButtons) 
 		{
