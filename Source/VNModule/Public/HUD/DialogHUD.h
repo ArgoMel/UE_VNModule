@@ -5,6 +5,8 @@
 
 class UChoiceButton;
 class UChoicesGridPanel;
+class ULogMain;
+class ULogData;
 class UVisualNovelGameInstance;
 
 UCLASS()
@@ -28,7 +30,10 @@ private:
 	TObjectPtr<UBorder> mDialogBorder;
 	TObjectPtr<UChoicesGridPanel>	mChoiceGridPanel;
 	TObjectPtr<UThrobber>	mTypingThrobber;
+	TObjectPtr<UButton>	mLogButton;
 
+	TSubclassOf<UUserWidget>	mLogDataClass;
+	TSubclassOf<UUserWidget>	mLogMainClass;
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
 
@@ -62,9 +67,14 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	TObjectPtr<UChoiceButton>	mChoiceButtonWidget;
 	UPROPERTY(BlueprintReadWrite, Category = "Choice")
-	int32 mButtonIndex;
-	UPROPERTY(BlueprintReadWrite, Category = "Choice")
 	bool mIsChoiceTriggered;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Log")
+	TObjectPtr<ULogMain>	mLogMainWidget;
+	UPROPERTY(BlueprintReadWrite, Category = "Log")
+	TObjectPtr<ULogData>	mLogDataWidget;
+	UPROPERTY(BlueprintReadWrite, Category = "Log")
+	int32	mLogIndex;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>>	mShakeSound;
@@ -78,6 +88,12 @@ protected:
 	TObjectPtr<USoundBase>	mMusicSound;
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TObjectPtr<USoundBase>	mLetterSound;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase>	mContinueSound;
+
+protected:
+	UFUNCTION()
+	void LogButtonClicked();
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Dialog")
@@ -115,6 +131,9 @@ public:
 	void ClickChoice_Implementation(int32 index);
 	UFUNCTION(BlueprintCallable, Category = "Choice")
 	void SelectChoiceRowIndex(int32 selectedIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Log")
+	void GenerateLogData();
 	
 	UFUNCTION(BlueprintCallable, Category = "VFX")
 	void PlayVisualFX(EVisualFX visualFX);

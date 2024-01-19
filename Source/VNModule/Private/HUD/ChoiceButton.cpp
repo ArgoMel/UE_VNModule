@@ -15,7 +15,7 @@ void UChoiceButton::NativeConstruct()
 	Super::NativeConstruct();
 	mChoiceCanvas = Cast<UCanvas>(GetWidgetFromName(TEXT("Choice_Canvas")));
 	mChoiceButton = Cast<UButton>(GetWidgetFromName(TEXT("Choice_Button")));
-	mChoiceButton->OnPressed.AddDynamic(this, &UChoiceButton::ChoiceClicked);
+	mChoiceButton->OnClicked.AddDynamic(this, &UChoiceButton::ChoiceClicked);
 	mChoiceText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Choice_Text")));
 }
 

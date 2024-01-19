@@ -1,6 +1,9 @@
 ﻿#include "HUD/DialogHUD.h"
 #include "HUD/ChoiceButton.h"
 #include "HUD/ChoicesGridPanel.h"
+#include "Widget/Log/LogMain.h"
+#include "Widget/Log/LogData.h"
+#include "Widget/Log/LogGridPanel.h"
 #include "VisualNovelGameInstance.h"
 
 UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
@@ -13,9 +16,22 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     mCanSkipDialog = false;
     mDisableLMB = false;
 
-    mButtonIndex = 0;
     mIsChoiceTriggered = false;
 
+    mLogIndex = 0;
+
+    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_LogMain(TEXT(
+        "/Game/VisualNovel/Widgets/Log/WBP_LogMain.WBP_LogMain_C"));
+    if (WBP_LogMain.Succeeded())
+    {
+        mLogMainClass = WBP_LogMain.Class;
+    }
+    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_LogData(TEXT(
+        "/Game/VisualNovel/Widgets/Log/WBP_LogData.WBP_LogData_C"));
+    if (WBP_LogData.Succeeded())
+    {
+        mLogDataClass = WBP_LogData.Class;
+    }
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
         "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
     if (WBP_ChoiceButton_C.Succeeded())
@@ -58,6 +74,12 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     {
         mMusicSound = SW_Music.Object;
     }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Continue(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/Music/SW_Continue.SW_Continue'"));
+    if (SW_Continue.Succeeded())
+    {
+        mContinueSound = SW_Continue.Object;
+    }
     static ConstructorHelpers::FObjectFinder<USoundBase>	SC_Keys(TEXT(
         "/Script/Engine.SoundCue'/Game/VisualNovel/Sounds/SFX/SC_Keys.SC_Keys'"));
     if (SC_Keys.Succeeded())
@@ -84,18 +106,46 @@ void UDialogHUD::NativeConstruct()
     mDialogBorder = Cast<UBorder>(GetWidgetFromName(TEXT("Dialog_Border")));
     mChoiceGridPanel = Cast<UChoicesGridPanel>(GetWidgetFromName(TEXT("WBP_ChoicesGridPanel")));
     mTypingThrobber = Cast<UThrobber>(GetWidgetFromName(TEXT("Typing_Throbber")));
+    mLogButton = Cast<UButton>(GetWidgetFromName(TEXT("Log_Button")));
+
+    mLogButton->OnClicked.AddDynamic(this, &UDialogHUD::LogButtonClicked);
 
     RefreshData();
     SetLetterByLetter();
     ToggleDialogState(EDialogState::Typing);
     PlayAnimation(mFadeContinueTextAnim,0.f,0,EUMGSequencePlayMode::Forward,0.5f);
-    if (IsValid(mBGSound))
+    UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
+    UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
+
+    if (IsValid(mLogMainClass))
     {
-        UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
+        mLogMainWidget = CreateWidget<ULogMain>(GetWorld(), mLogMainClass);
+        if (IsValid(mLogMainWidget))
+        {
+            mLogMainWidget->AddToViewport(1);
+            mLogMainWidget->SetVisibility(ESlateVisibility::Hidden);
+            APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+            if (IsValid(controller))
+            {
+                FInputModeGameAndUI inputMode;
+                inputMode.SetWidgetToFocus(GetCachedWidget());
+                controller->SetInputMode(inputMode);
+            }
+        }
     }
-    if (IsValid(mMusicSound))
+}
+
+void UDialogHUD::LogButtonClicked()
+{
+    mLogMainWidget->SetVisibility(ESlateVisibility::Visible);
+    APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (IsValid(controller))
     {
-        UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
+        FInputModeUIOnly inputMode;
+        inputMode.SetWidgetToFocus(mLogMainWidget->GetCachedWidget());
+        controller->SetInputMode(inputMode);
+        UGameplayStatics::SetGamePaused(GetWorld(),true);
+        UGameplayStatics::PlaySound2D(GetWorld(), mContinueSound);
     }
 }
 
@@ -161,10 +211,7 @@ void UDialogHUD::DialogLogic()
         mDialogFinished = false;
         mCanSkipDialog = true;
         ToggleDialogState(EDialogState::Typing);
-        if (IsValid(mLetterSound))
-        {
-            UGameplayStatics::PlaySound2D(GetWorld(), mLetterSound);
-        }
+        UGameplayStatics::PlaySound2D(GetWorld(), mLetterSound);
     }
     else
     {
@@ -197,10 +244,7 @@ void UDialogHUD::SkipDialog()
     mCurDialogText = GetDTInfo().DialogText;
     mDialogText->SetText(FText::FromString(mCurDialogText));
     ToggleDialogState(EDialogState::FinishedTyping);
-    if (IsValid(mSkipSound))
-    {
-        UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
-    }
+    UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
 }
 
 void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
@@ -304,17 +348,16 @@ void UDialogHUD::CreateChoices_Implementation()
     int32 size = choiceInfo.Num();
     for (int32 i = 0; i < size;++i)
     {
-        mButtonIndex = i;
         if (IsValid(mChoiceButtonClass))
         {
             mChoiceButtonWidget = CreateWidget<UChoiceButton>(GetWorld(), mChoiceButtonClass);
             if (IsValid(mChoiceButtonWidget))
             {
-                mChoiceButtonWidget->SetButtonIndex(mButtonIndex);
-                mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, mButtonIndex);
+                mChoiceButtonWidget->SetButtonIndex(i);
+                mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, i);
                 mChoiceButtonWidgets.Add(mChoiceButtonWidget);
                 mChoiceButtonWidget->GetChoiceText()->SetText((
-                    FText::FromString(choiceInfo[mButtonIndex].ChoicesText)));
+                    FText::FromString(choiceInfo[i].ChoicesText)));
                 mChoiceButtonWidget->OnCallChoiceButton.AddDynamic(this, &UDialogHUD::ClickChoice);
             }
         }
@@ -324,10 +367,7 @@ void UDialogHUD::CreateChoices_Implementation()
 void UDialogHUD::ClickChoice_Implementation(int32 index)
 {
     mIsChoiceTriggered = false;
-    if(IsValid(mChoiceSound))
-    {
-        UGameplayStatics::PlaySound2D(GetWorld(), mChoiceSound);
-    }
+    UGameplayStatics::PlaySound2D(GetWorld(), mChoiceSound);
     ToggleDialogState(EDialogState::Typing);
     int32 choiceindex=GetDTInfo().ChoiceInfo[index].SelectedChoiceRowIndex;
     ContinueDialog(true, choiceindex);
@@ -336,6 +376,20 @@ void UDialogHUD::ClickChoice_Implementation(int32 index)
 void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)
 {
     mRowNumber = selectedIndex;
+}
+
+void UDialogHUD::GenerateLogData()
+{
+    if (IsValid(mLogDataClass))
+    {
+        mLogDataWidget = CreateWidget<ULogData>(GetWorld(), mLogDataClass);
+        if (IsValid(mLogDataWidget))
+        {
+            ++mLogIndex;
+            mLogMainWidget->GetLogGridPanel()->GetLogUniformGridPanel()->AddChildToUniformGrid(
+                mLogDataWidget, mLogIndex);
+        }
+    }
 }
 
 void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
@@ -349,10 +403,7 @@ void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
         ToggleBorders(false);
         for (auto& shakeSound : mShakeSound)
         {
-            if (IsValid(shakeSound))
-            {
-                UGameplayStatics::PlaySound2D(GetWorld(), shakeSound);
-            }
+            UGameplayStatics::PlaySound2D(GetWorld(), shakeSound);
         }
         PlayAnimation(mShakeAnim);
         FTimerHandle clearTimer;
@@ -372,11 +423,13 @@ void UDialogHUD::NextDialog()
         ToggleDialogState(EDialogState::Typing);
         if(GetDTInfo().ChoiceInfo.IsEmpty())
         {
+            GenerateLogData();
             ContinueDialog(false);
         }
-        else
+        else if(!mIsChoiceTriggered)
         {
             CreateChoices();
+            GenerateLogData();
         }
     }
     else
