@@ -21,6 +21,10 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
 
     mLogIndex = 0;
 
+    mAutoModeDuration = 4.f;
+    mResetAutoModeDuration = mAutoModeDuration;
+    mIsAutoModeOn = false;
+
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_LogMain(TEXT(
         "/Game/VisualNovel/Widgets/Log/WBP_LogMain.WBP_LogMain_C"));
     if (WBP_LogMain.Succeeded())
@@ -95,6 +99,8 @@ void UDialogHUD::NativeConstruct()
     mCharacterNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CharacterName_Text")));
     mDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Dialog_Text")));
     mContinueText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Continue_Text")));
+    mTimeRemainingText = Cast<UTextBlock>(GetWidgetFromName(TEXT("TimeRemaining_Text")));
+    mAutoSkipDurationText = Cast<UTextBlock>(GetWidgetFromName(TEXT("AutoSkipDuration_Text")));
     mBGImage = Cast<UImage>(GetWidgetFromName(TEXT("BG_Image")));
     mLeftSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("LeftSprite_Image")));
     mRightSpriteImage = Cast<UImage>(GetWidgetFromName(TEXT("RightSprite_Image")));
@@ -122,7 +128,7 @@ void UDialogHUD::NativeConstruct()
         if (IsValid(mLogMainWidget))
         {
             mLogMainWidget->AddToViewport(1);
-            mLogMainWidget->SetVisibility(ESlateVisibility::Hidden);
+            mLogMainWidget->SetVisibility(ESlateVisibility::Collapsed);
             APlayerController* controller = GetOwningPlayer();
             if (IsValid(controller))
             {
@@ -167,16 +173,48 @@ void UDialogHUD::AutoButtonClicked()
         return;
     }
     UGameplayStatics::PlaySound2D(GetWorld(), hud->GetLogButtonSound());
-    mAutoButton->SetRenderOpacity(1.f);
-    mAutoButton->SetRenderOpacity(0.7f);
+    if(mIsAutoModeOn)
+    {
+        mAutoButton->SetRenderOpacity(0.7f);
+        GetWorld()->GetTimerManager().PauseTimer(mAutoModeTimer);
+        ClearAndResetAutoCountdown();
+    }
+    else
+    {
+        mAutoButton->SetRenderOpacity(1.f);
+    }
+    mIsAutoModeOn = !mIsAutoModeOn;
+    if(mIsAutoModeOn&&mDialogFinished)
+    {
+        if(!mIsChoiceTriggered)
+        {
+            AutoModeStart();
+        }
+    }
 }
 
 void UDialogHUD::AutoButtonHovered()
 {
+    if (mIsAutoModeOn)
+    {
+        mAutoButton->SetRenderOpacity(0.9f);
+    }
+    else
+    {
+        mAutoButton->SetRenderOpacity(0.8f);
+    }
 }
 
 void UDialogHUD::AutoButtonUnHovered()
 {
+    if (mIsAutoModeOn)
+    {
+        mAutoButton->SetRenderOpacity(0.7f);
+    }
+    else
+    {
+        mAutoButton->SetRenderOpacity(1.f);
+    }
 }
 
 FDialogInfo UDialogHUD::GetDTInfo()
@@ -275,6 +313,10 @@ void UDialogHUD::SkipDialog()
     mDialogText->SetText(FText::FromString(mCurDialogText));
     ToggleDialogState(EDialogState::FinishedTyping);
     UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
+    if (mIsAutoModeOn)
+    {
+        AutoModeStart();
+    }
 }
 
 void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
@@ -283,13 +325,16 @@ void UDialogHUD::ContinueDialog(bool hasChoice, int32 selectedIndex)
     if(!hasChoice)
     {
         SetNextDialogRowIndex(1);
+        RefreshData();
+        SetLetterByLetter();
+        ClearAndResetAutoCountdown();
     }
     else
     {
         SelectChoiceRowIndex(selectedIndex);
+        RefreshData();
+        SetLetterByLetter();
     }
-    RefreshData();
-    SetLetterByLetter();
     PlayVisualFX(GetDTInfo().VisualFX);
 }
 
@@ -326,6 +371,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(true);
         mTypingThrobber->SetAnimateOpacity(true);
         mTypingThrobber->SetAnimateVertically(true);
+        mTypingThrobber->SetNumberOfPieces(3);
         brush.TintColor = FLinearColor::Yellow;
         mContinueText->SetVisibility(ESlateVisibility::Collapsed);
         break;
@@ -333,6 +379,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(false);
         mTypingThrobber->SetAnimateOpacity(false);
         mTypingThrobber->SetAnimateVertically(false);
+        mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Blue;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
         name = FName(TEXT("클릭!"));
@@ -341,6 +388,7 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(false);
         mTypingThrobber->SetAnimateOpacity(false);
         mTypingThrobber->SetAnimateVertically(false);
+        mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Red;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
         name = FName(TEXT("선택중..."));
@@ -371,6 +419,7 @@ void UDialogHUD::CreateChoices_Implementation()
 {
     mIsChoiceTriggered = true;
     ToggleDialogState(EDialogState::Choice);
+    ClearAndResetAutoCountdown();
     TArray<FChoiceInfo> choiceInfo= GetDTInfo().ChoiceInfo;
     int32 size = choiceInfo.Num();
     for (int32 i = 0; i < size;++i)
@@ -447,6 +496,56 @@ void UDialogHUD::SetLogData()
     mLogDataWidget->GetSecondText()->SetText(FText::FromString(GetSecond()));
 }
 
+void UDialogHUD::AutoModeStart_Implementation()
+{
+    AutoModeCountdown();
+    GetWorld()->GetTimerManager().SetTimer(mAutoModeTimer, this, &UDialogHUD::AutoModeCountdown, 1.f,true);
+    mTimeRemainingText->SetVisibility(ESlateVisibility::Visible);
+    mAutoSkipDurationText->SetVisibility(ESlateVisibility::Visible);
+    ToggleTimeRemainingText();
+}
+
+void UDialogHUD::AutoModeCountdown_Implementation()
+{
+    --mAutoModeDuration;
+    FString string;
+    if(mAutoModeDuration==0.f)
+    {
+        string = FString(TEXT("다음 대사로 넘어가는 중..."));
+    }
+    else
+    {
+        string = FString::Printf(TEXT("%02i"), (int32)mAutoModeDuration);
+    }
+    mAutoSkipDurationText->SetText(FText::FromString(string));
+    ToggleTimeRemainingText();
+    if(mAutoModeDuration<0)
+    {
+        ClearAndResetAutoCountdown();
+        NextDialog();
+    }
+}
+
+void UDialogHUD::ClearAndResetAutoCountdown()
+{
+    GetWorld()->GetTimerManager().ClearTimer(mAutoModeTimer);
+    mAutoModeDuration = mResetAutoModeDuration;
+    mTimeRemainingText->SetVisibility(ESlateVisibility::Collapsed);
+    mAutoSkipDurationText->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UDialogHUD::ToggleTimeRemainingText()
+{
+    if(mAutoModeDuration<=0)
+    {
+        mTimeRemainingText->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    else
+    {
+        mTimeRemainingText->SetVisibility(ESlateVisibility::Visible);
+    }
+}
+
 void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
 {
     switch (visualFX)
@@ -475,7 +574,6 @@ void UDialogHUD::NextDialog()
     }
     if (mDialogFinished)
     {
-        //ToggleDialogState(EDialogState::Typing);
         if(GetDTInfo().ChoiceInfo.IsEmpty())
         {
             GenerateLogData();

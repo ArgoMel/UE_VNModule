@@ -24,6 +24,8 @@ private:
 	TObjectPtr<UTextBlock> mCharacterNameText;
 	TObjectPtr<UTextBlock> mDialogText;
 	TObjectPtr<UTextBlock> mContinueText;
+	TObjectPtr<UTextBlock> mTimeRemainingText;
+	TObjectPtr<UTextBlock> mAutoSkipDurationText;
 	TObjectPtr<UImage> mBGImage;
 	TObjectPtr<UImage> mLeftSpriteImage;
 	TObjectPtr<UImage> mRightSpriteImage;
@@ -36,6 +38,7 @@ private:
 	TSubclassOf<UUserWidget>	mLogDataClass;
 	TSubclassOf<UUserWidget>	mLogMainClass;
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
+
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
 
 protected:
@@ -76,6 +79,15 @@ protected:
 	TObjectPtr<ULogData>	mLogDataWidget;
 	UPROPERTY(BlueprintReadWrite, Category = "Log")
 	int32	mLogIndex;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Auto")
+	FTimerHandle mAutoModeTimer;
+	UPROPERTY(BlueprintReadWrite, Category = "Auto")
+	float mAutoModeDuration;
+	UPROPERTY(BlueprintReadWrite, Category = "Auto")
+	float mResetAutoModeDuration;
+	UPROPERTY(BlueprintReadWrite, Category = "Auto")
+	bool mIsAutoModeOn;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>>	mShakeSound;
@@ -159,6 +171,17 @@ public:
 		int32 second = FDateTime::Now().GetSecond();
 		return FString::Printf(TEXT("%02i"), second);
 	}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Auto")
+	void AutoModeStart();
+	void AutoModeStart_Implementation();
+	UFUNCTION(BlueprintNativeEvent, Category = "Auto")
+	void AutoModeCountdown();
+	void AutoModeCountdown_Implementation();
+	UFUNCTION(BlueprintCallable, Category = "Auto")
+	void ClearAndResetAutoCountdown();
+	UFUNCTION(BlueprintCallable, Category = "Auto")
+	void ToggleTimeRemainingText();
 	
 	UFUNCTION(BlueprintCallable, Category = "VFX")
 	void PlayVisualFX(EVisualFX visualFX);

@@ -24,7 +24,7 @@ void ULogMain::NativeConstruct()
 
 void ULogMain::LogButtonClicked()
 {
-	SetVisibility(ESlateVisibility::Hidden);
+	SetVisibility(ESlateVisibility::Collapsed);
 	APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!IsValid(controller))
 	{
