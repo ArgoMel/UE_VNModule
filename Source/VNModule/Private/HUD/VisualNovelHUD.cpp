@@ -11,6 +11,12 @@ AVisualNovelHUD::AVisualNovelHUD()
 	{
 		mUIClass = WBP_DialogHUD.Class;
 	}
+	static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Continue(TEXT(
+		"/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/SFX/SW_Continue.SW_Continue'"));
+	if (SW_Continue.Succeeded())
+	{
+		mLogButtonSound = SW_Continue.Object;
+	}
 }
 
 void AVisualNovelHUD::BeginPlay()

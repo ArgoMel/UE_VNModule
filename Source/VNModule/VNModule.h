@@ -12,6 +12,9 @@
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTestDelegate);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCallChoiceButton, int32, Index);
 
+static constexpr FLinearColor LeftSpriteColor(0.85f, 0.04f, 0.07f);
+static constexpr FLinearColor RightSpriteColor(0.9f, 0.4f, 0.35f);
+
 UENUM(BlueprintType)
 enum class ECharacterName : uint8
 {

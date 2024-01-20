@@ -1,6 +1,7 @@
 ﻿#include "HUD/DialogHUD.h"
 #include "HUD/ChoiceButton.h"
 #include "HUD/ChoicesGridPanel.h"
+#include "HUD/VisualNovelHUD.h"
 #include "Widget/Log/LogMain.h"
 #include "Widget/Log/LogData.h"
 #include "Widget/Log/LogGridPanel.h"
@@ -68,23 +69,17 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     {
         mBGSound = SW_BG.Object;
     }
-    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Music(TEXT(
-        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/Music/SW_Music.SW_Music'"));
-    if (SW_Music.Succeeded())
-    {
-        mMusicSound = SW_Music.Object;
-    }
-    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Continue(TEXT(
-        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/Music/SW_Continue.SW_Continue'"));
-    if (SW_Continue.Succeeded())
-    {
-        mContinueSound = SW_Continue.Object;
-    }
     static ConstructorHelpers::FObjectFinder<USoundBase>	SC_Keys(TEXT(
         "/Script/Engine.SoundCue'/Game/VisualNovel/Sounds/SFX/SC_Keys.SC_Keys'"));
     if (SC_Keys.Succeeded())
     {
         mLetterSound = SC_Keys.Object;
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>	SW_Music(TEXT(
+        "/Script/Engine.SoundWave'/Game/VisualNovel/Sounds/Music/SW_Music.SW_Music'"));
+    if (SW_Music.Succeeded())
+    {
+        mMusicSound = SW_Music.Object;
     }
 }
 
@@ -107,8 +102,12 @@ void UDialogHUD::NativeConstruct()
     mChoiceGridPanel = Cast<UChoicesGridPanel>(GetWidgetFromName(TEXT("WBP_ChoicesGridPanel")));
     mTypingThrobber = Cast<UThrobber>(GetWidgetFromName(TEXT("Typing_Throbber")));
     mLogButton = Cast<UButton>(GetWidgetFromName(TEXT("Log_Button")));
+    mAutoButton = Cast<UButton>(GetWidgetFromName(TEXT("Auto_Button")));
 
     mLogButton->OnClicked.AddDynamic(this, &UDialogHUD::LogButtonClicked);
+    mAutoButton->OnClicked.AddDynamic(this, &UDialogHUD::AutoButtonClicked);
+    mAutoButton->OnHovered.AddDynamic(this, &UDialogHUD::AutoButtonHovered);
+    mAutoButton->OnUnhovered.AddDynamic(this, &UDialogHUD::AutoButtonUnHovered);
 
     RefreshData();
     SetLetterByLetter();
@@ -124,7 +123,7 @@ void UDialogHUD::NativeConstruct()
         {
             mLogMainWidget->AddToViewport(1);
             mLogMainWidget->SetVisibility(ESlateVisibility::Hidden);
-            APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+            APlayerController* controller = GetOwningPlayer();
             if (IsValid(controller))
             {
                 FInputModeGameAndUI inputMode;
@@ -138,15 +137,46 @@ void UDialogHUD::NativeConstruct()
 void UDialogHUD::LogButtonClicked()
 {
     mLogMainWidget->SetVisibility(ESlateVisibility::Visible);
-    APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    if (IsValid(controller))
+    APlayerController* controller = GetOwningPlayer();
+    if (!IsValid(controller))
     {
-        FInputModeUIOnly inputMode;
-        inputMode.SetWidgetToFocus(mLogMainWidget->GetCachedWidget());
-        controller->SetInputMode(inputMode);
-        UGameplayStatics::SetGamePaused(GetWorld(),true);
-        UGameplayStatics::PlaySound2D(GetWorld(), mContinueSound);
+        return;
     }
+    FInputModeUIOnly inputMode;
+    inputMode.SetWidgetToFocus(mLogMainWidget->GetCachedWidget());
+    controller->SetInputMode(inputMode);
+    UGameplayStatics::SetGamePaused(GetWorld(), true);
+    AVisualNovelHUD* hud = Cast<AVisualNovelHUD>(controller->GetHUD());
+    if(!IsValid(hud))
+    {
+        return;
+    }
+    UGameplayStatics::PlaySound2D(GetWorld(), hud->GetLogButtonSound());
+}
+
+void UDialogHUD::AutoButtonClicked()
+{
+    APlayerController* controller = GetOwningPlayer();
+    if (!IsValid(controller))
+    {
+        return;
+    }
+    AVisualNovelHUD* hud = Cast<AVisualNovelHUD>(controller->GetHUD());
+    if (!IsValid(hud))
+    {
+        return;
+    }
+    UGameplayStatics::PlaySound2D(GetWorld(), hud->GetLogButtonSound());
+    mAutoButton->SetRenderOpacity(1.f);
+    mAutoButton->SetRenderOpacity(0.7f);
+}
+
+void UDialogHUD::AutoButtonHovered()
+{
+}
+
+void UDialogHUD::AutoButtonUnHovered()
+{
 }
 
 FDialogInfo UDialogHUD::GetDTInfo()
@@ -296,7 +326,6 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(true);
         mTypingThrobber->SetAnimateOpacity(true);
         mTypingThrobber->SetAnimateVertically(true);
-        mTypingThrobber->SetNumberOfPieces(3);
         brush.TintColor = FLinearColor::Yellow;
         mContinueText->SetVisibility(ESlateVisibility::Collapsed);
         break;
@@ -304,7 +333,6 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(false);
         mTypingThrobber->SetAnimateOpacity(false);
         mTypingThrobber->SetAnimateVertically(false);
-        mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Blue;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
         name = FName(TEXT("클릭!"));
@@ -313,7 +341,6 @@ void UDialogHUD::ToggleDialogState(EDialogState state)
         mTypingThrobber->SetAnimateHorizontally(false);
         mTypingThrobber->SetAnimateOpacity(false);
         mTypingThrobber->SetAnimateVertically(false);
-        mTypingThrobber->SetNumberOfPieces(1);
         brush.TintColor = FLinearColor::Red;
         mContinueText->SetVisibility(ESlateVisibility::Visible);
         name = FName(TEXT("선택중..."));
@@ -330,13 +357,13 @@ void UDialogHUD::SetCharacterSettings(bool bIsLeftSpriteHighlighted)
     {
         mLeftSpriteImage->SetBrushTintColor(FLinearColor::White);
         mRightSpriteImage->SetBrushTintColor(FLinearColor(0.4f,0.4f,0.4f));
-        mCharacterNameText->SetColorAndOpacity(FLinearColor(0.85f,0.04f,0.07f));
+        mCharacterNameText->SetColorAndOpacity(LeftSpriteColor);
     }
     else
     {
         mLeftSpriteImage->SetBrushTintColor(FLinearColor(0.4f, 0.4f, 0.4f));
         mRightSpriteImage->SetBrushTintColor(FLinearColor::White);
-        mCharacterNameText->SetColorAndOpacity(FLinearColor(0.9f, 0.4f, 0.35f));
+        mCharacterNameText->SetColorAndOpacity(RightSpriteColor);
     }
 }
 
@@ -385,11 +412,39 @@ void UDialogHUD::GenerateLogData()
         mLogDataWidget = CreateWidget<ULogData>(GetWorld(), mLogDataClass);
         if (IsValid(mLogDataWidget))
         {
-            ++mLogIndex;
             mLogMainWidget->GetLogGridPanel()->GetLogUniformGridPanel()->AddChildToUniformGrid(
                 mLogDataWidget, mLogIndex);
+            ++mLogIndex;
+            SetLogData();
         }
     }
+}
+
+void UDialogHUD::SetLogData()
+{
+    FDialogInfo dialogInfo = GetDTInfo();
+    switch (dialogInfo.CharacterSetting)
+    {
+    case ECharacterSetting::LeftSpriteSpeaking:
+    case ECharacterSetting::RightSpriteHidden:
+        mLogDataWidget->GetSpriteImage()->SetBrushFromTexture(dialogInfo.LeftSpriteImage);
+        mLogDataWidget->GetLogCharacterNameText()->SetColorAndOpacity(LeftSpriteColor);
+        break;
+    case ECharacterSetting::RightSpriteSpeaking:
+    case ECharacterSetting::LeftSpriteHidden:
+        mLogDataWidget->GetSpriteImage()->SetBrushFromTexture(dialogInfo.RightSpriteImage);
+        mLogDataWidget->GetLogCharacterNameText()->SetColorAndOpacity(RightSpriteColor);
+        break;
+    case ECharacterSetting::AllSpriteHidden:
+        mLogDataWidget->GetSpriteImage()->SetVisibility(ESlateVisibility::Hidden);
+        break;
+    }
+    mLogDataWidget->GetLogCharacterNameText()->SetText(FText::FromString(
+        EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
+    mLogDataWidget->GetLogDialogText()->SetText(FText::FromString(dialogInfo.DialogText));
+    mLogDataWidget->GetHourText()->SetText(FText::FromString(GetHour()));
+    mLogDataWidget->GetMinuteText()->SetText(FText::FromString(GetMinute()));
+    mLogDataWidget->GetSecondText()->SetText(FText::FromString(GetSecond()));
 }
 
 void UDialogHUD::PlayVisualFX(EVisualFX visualFX)
@@ -420,7 +475,7 @@ void UDialogHUD::NextDialog()
     }
     if (mDialogFinished)
     {
-        ToggleDialogState(EDialogState::Typing);
+        //ToggleDialogState(EDialogState::Typing);
         if(GetDTInfo().ChoiceInfo.IsEmpty())
         {
             GenerateLogData();

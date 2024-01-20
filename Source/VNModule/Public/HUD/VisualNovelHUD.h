@@ -19,6 +19,10 @@ private:
 	TSubclassOf<UUserWidget>	mUIClass;
 	TObjectPtr<UDialogHUD>	mDialogWidget;
 
+protected:
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase>	mLogButtonSound;
+
 public:
 	AVisualNovelHUD* GetVNHUD_Implementation();
 
@@ -27,5 +31,9 @@ public:
 	UDialogHUD* GetDialogWidget()
 	{
 		return mDialogWidget;
+	}
+	USoundBase* GetLogButtonSound()
+	{
+		return mLogButtonSound;
 	}
 };

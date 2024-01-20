@@ -31,6 +31,7 @@ private:
 	TObjectPtr<UChoicesGridPanel>	mChoiceGridPanel;
 	TObjectPtr<UThrobber>	mTypingThrobber;
 	TObjectPtr<UButton>	mLogButton;
+	TObjectPtr<UButton>	mAutoButton;
 
 	TSubclassOf<UUserWidget>	mLogDataClass;
 	TSubclassOf<UUserWidget>	mLogMainClass;
@@ -88,12 +89,16 @@ protected:
 	TObjectPtr<USoundBase>	mMusicSound;
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TObjectPtr<USoundBase>	mLetterSound;
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
-	TObjectPtr<USoundBase>	mContinueSound;
 
 protected:
 	UFUNCTION()
 	void LogButtonClicked();
+	UFUNCTION()
+	void AutoButtonClicked();
+	UFUNCTION()
+	void AutoButtonHovered();
+	UFUNCTION()
+	void AutoButtonUnHovered();
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Dialog")
@@ -134,6 +139,26 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Log")
 	void GenerateLogData();
+	UFUNCTION(BlueprintCallable, Category = "Log")
+	void SetLogData();
+	UFUNCTION(BlueprintPure, Category = "Log")
+	FString GetHour()
+	{
+		int32 hour = FDateTime::Now().GetHour();
+		return FString::Printf(TEXT("%02i"), hour);
+	}
+	UFUNCTION(BlueprintPure, Category = "Log")
+	FString GetMinute()
+	{
+		int32 minute = FDateTime::Now().GetMinute();
+		return FString::Printf(TEXT("%02i"), minute);
+	}
+	UFUNCTION(BlueprintPure, Category = "Log")
+	FString GetSecond()
+	{
+		int32 second = FDateTime::Now().GetSecond();
+		return FString::Printf(TEXT("%02i"), second);
+	}
 	
 	UFUNCTION(BlueprintCallable, Category = "VFX")
 	void PlayVisualFX(EVisualFX visualFX);
