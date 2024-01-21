@@ -86,10 +86,6 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Auto")
 	FTimerHandle mAutoModeTimer;
 	UPROPERTY(BlueprintReadWrite, Category = "Auto")
-	float mAutoModeDuration;
-	UPROPERTY(BlueprintReadWrite, Category = "Auto")
-	float mResetAutoModeDuration;
-	UPROPERTY(BlueprintReadWrite, Category = "Auto")
 	bool mIsAutoModeOn;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Setting")

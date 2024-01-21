@@ -4,6 +4,9 @@ UVisualNovelGameInstance::UVisualNovelGameInstance()
 {
 	Language = ELanguage::Korean;
 
+	AutoModeDuration = 4.f;
+	ResetAutoModeDuration = AutoModeDuration;
+
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_DialogInfo(TEXT(
 		"/Game/VisualNovel/Data/DT_DialogInfo.DT_DialogInfo"));
 	if (DT_DialogInfo.Succeeded())

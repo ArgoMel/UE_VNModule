@@ -22,8 +22,6 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
 
     mLogIndex = 0;
 
-    mAutoModeDuration = 4.f;
-    mResetAutoModeDuration = mAutoModeDuration;
     mIsAutoModeOn = false;
 
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_LogMain(TEXT(
@@ -549,19 +547,20 @@ void UDialogHUD::AutoModeStart_Implementation()
 
 void UDialogHUD::AutoModeCountdown_Implementation()
 {
-    --mAutoModeDuration;
+    int32 autoModeDuration = (int32)mGameInstance->AutoModeDuration-1;
     FString string;
-    if(mAutoModeDuration==0.f)
+    if(autoModeDuration ==0)
     {
         string = FString(TEXT("다음 대사로 넘어가는 중..."));
     }
     else
     {
-        string = FString::Printf(TEXT("%02i"), (int32)mAutoModeDuration);
+        string = FString::Printf(TEXT("%02i"), autoModeDuration);
     }
     mAutoSkipDurationText->SetText(FText::FromString(string));
+    mGameInstance->AutoModeDuration = autoModeDuration;
     ToggleTimeRemainingText();
-    if(mAutoModeDuration<0)
+    if(autoModeDuration <0)
     {
         ClearAndResetAutoCountdown();
         NextDialog();
@@ -571,14 +570,14 @@ void UDialogHUD::AutoModeCountdown_Implementation()
 void UDialogHUD::ClearAndResetAutoCountdown()
 {
     GetWorld()->GetTimerManager().ClearTimer(mAutoModeTimer);
-    mAutoModeDuration = mResetAutoModeDuration;
+    mGameInstance->AutoModeDuration = mGameInstance->ResetAutoModeDuration;
     mTimeRemainingText->SetVisibility(ESlateVisibility::Collapsed);
     mAutoSkipDurationText->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UDialogHUD::ToggleTimeRemainingText()
 {
-    if(mAutoModeDuration<=0)
+    if(mGameInstance->AutoModeDuration<=0)
     {
         mTimeRemainingText->SetVisibility(ESlateVisibility::Collapsed);
     }

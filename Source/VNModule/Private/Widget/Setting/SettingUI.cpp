@@ -1,8 +1,17 @@
-#include "Widget/Setting/SettingUI.h"
+﻿#include "Widget/Setting/SettingUI.h"
 #include "HUD/VisualNovelHUD.h"
 #include "HUD/DialogHUD.h"
 //#include "Interface/HUDInterface.h"
 #include "VisualNovelGameInstance.h"
+
+constexpr float MinAutoDuration=1.f;
+constexpr float MaxAutoDuration=10.f;
+
+void USettingUI::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+	mGameInstance = GetWorld()->GetGameInstance<UVisualNovelGameInstance>();
+}
 
 void USettingUI::NativePreConstruct()
 {
@@ -20,10 +29,19 @@ void USettingUI::NativeConstruct()
 
 	mApplyButton = Cast<UButton>(GetWidgetFromName(TEXT("Apply_Button")));
 	mCloseButton = Cast<UButton>(GetWidgetFromName(TEXT("Close_Button")));
+	mAutoDecreaseButton = Cast<UButton>(GetWidgetFromName(TEXT("DecDuration_Button")));
+	mAutoIncreaseButton = Cast<UButton>(GetWidgetFromName(TEXT("IncDuration_Button")));
+	mCountdownDurationText = Cast<UTextBlock>(GetWidgetFromName(TEXT("CountdownDuration_Text")));
 
 	mApplyButton->OnClicked.AddDynamic(this, &USettingUI::ApplyButtonClicked);
 	mCloseButton->OnClicked.AddDynamic(this, &USettingUI::CloseButtonClicked);
+	mAutoDecreaseButton->OnClicked.AddDynamic(this, &USettingUI::AutoDecreaseButtonClicked);
+	mAutoIncreaseButton->OnClicked.AddDynamic(this, &USettingUI::AutoIncreaseButtonClicked);
+	//settext 할때 델리게이트가 해제된다. 얘만 그런듯
+	//mCountdownDurationText->TextDelegate.BindDynamic(this, &USettingUI::SetAutoDurationText);
 	Language_CB->OnSelectionChanged.AddDynamic(this,&USettingUI::LanguageCBChanged);
+
+	SetAutoDurationText();
 
 	APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (IsValid(controller))
@@ -57,15 +75,36 @@ void USettingUI::CloseButtonClicked()
 	UGameplayStatics::PlaySound2D(GetWorld(), vnHUD->GetLogButtonSound());
 }
 
+void USettingUI::AutoDecreaseButtonClicked()
+{
+	mGameInstance->ResetAutoModeDuration = 
+		FMath::Clamp(mGameInstance->ResetAutoModeDuration-1,MinAutoDuration, MaxAutoDuration);
+	mGameInstance->AutoModeDuration= mGameInstance->ResetAutoModeDuration;
+	SetAutoDurationText();
+}
+
+void USettingUI::AutoIncreaseButtonClicked()
+{
+	mGameInstance->ResetAutoModeDuration =
+		FMath::Clamp(mGameInstance->ResetAutoModeDuration + 1, MinAutoDuration, MaxAutoDuration);
+	mGameInstance->AutoModeDuration = mGameInstance->ResetAutoModeDuration;
+	SetAutoDurationText();
+}
+
+void USettingUI::SetAutoDurationText()
+{
+	FString string = FString::Printf(TEXT("%02i 초"), (int32)mGameInstance->ResetAutoModeDuration);
+	mCountdownDurationText->SetText(FText::FromString(string));
+}
+
 void USettingUI::LanguageCBChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	UVisualNovelGameInstance* gameInst=GetWorld()->GetGameInstance<UVisualNovelGameInstance>();
-	if(!IsValid(gameInst))
+	if(!IsValid(mGameInstance))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No UVisualNovelGameInstance"));
 		return;
 	}
-	gameInst->Language = (ELanguage)Language_CB->FindOptionIndex(SelectedItem);
+	mGameInstance->Language = (ELanguage)Language_CB->FindOptionIndex(SelectedItem);
 	AVisualNovelHUD* vnHUD = GetVNHUD();
 	UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
 	dialogHUD->SkipDialog();
