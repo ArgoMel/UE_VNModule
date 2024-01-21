@@ -5,6 +5,7 @@
 #include "Widget/Log/LogMain.h"
 #include "Widget/Log/LogData.h"
 #include "Widget/Log/LogGridPanel.h"
+#include "Widget/Setting/SettingUI.h"
 #include "VisualNovelGameInstance.h"
 
 UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
@@ -36,6 +37,12 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
     if (WBP_LogData.Succeeded())
     {
         mLogDataClass = WBP_LogData.Class;
+    }
+    static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_Setting(TEXT(
+        "/Game/VisualNovel/Widgets/Setting/WBP_Setting.WBP_Setting_C"));
+    if (WBP_Setting.Succeeded())
+    {
+        mSettingUIClass = WBP_Setting.Class;
     }
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_ChoiceButton_C(TEXT(
         "/Game/VisualNovel/BluePrints/HUD/WBP_ChoiceButton.WBP_ChoiceButton_C"));
@@ -109,11 +116,13 @@ void UDialogHUD::NativeConstruct()
     mTypingThrobber = Cast<UThrobber>(GetWidgetFromName(TEXT("Typing_Throbber")));
     mLogButton = Cast<UButton>(GetWidgetFromName(TEXT("Log_Button")));
     mAutoButton = Cast<UButton>(GetWidgetFromName(TEXT("Auto_Button")));
+    mSettingButton = Cast<UButton>(GetWidgetFromName(TEXT("Setting_Button")));
 
     mLogButton->OnClicked.AddDynamic(this, &UDialogHUD::LogButtonClicked);
     mAutoButton->OnClicked.AddDynamic(this, &UDialogHUD::AutoButtonClicked);
     mAutoButton->OnHovered.AddDynamic(this, &UDialogHUD::AutoButtonHovered);
     mAutoButton->OnUnhovered.AddDynamic(this, &UDialogHUD::AutoButtonUnHovered);
+    mSettingButton->OnClicked.AddDynamic(this, &UDialogHUD::SettingButtonClicked);
 
     RefreshData();
     SetLetterByLetter();
@@ -129,15 +138,27 @@ void UDialogHUD::NativeConstruct()
         {
             mLogMainWidget->AddToViewport(1);
             mLogMainWidget->SetVisibility(ESlateVisibility::Collapsed);
-            APlayerController* controller = GetOwningPlayer();
-            if (IsValid(controller))
-            {
-                FInputModeGameAndUI inputMode;
-                inputMode.SetWidgetToFocus(GetCachedWidget());
-                controller->SetInputMode(inputMode);
-            }
         }
     }
+    if (IsValid(mSettingUIClass))
+    {
+        mSettingUIWidget = CreateWidget<USettingUI>(GetWorld(), mSettingUIClass);
+        if (IsValid(mSettingUIWidget))
+        {
+            mSettingUIWidget->AddToViewport(1);
+            mSettingUIWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    APlayerController* controller = GetOwningPlayer();
+    if (!IsValid(controller))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No GetOwningPlayer"));
+        return;
+    }
+    FInputModeGameAndUI inputMode;
+    inputMode.SetWidgetToFocus(GetCachedWidget());
+    controller->SetInputMode(inputMode);
 }
 
 void UDialogHUD::LogButtonClicked()
@@ -217,6 +238,26 @@ void UDialogHUD::AutoButtonUnHovered()
     }
 }
 
+void UDialogHUD::SettingButtonClicked()
+{
+    mSettingUIWidget->SetVisibility(ESlateVisibility::Visible);
+    APlayerController* controller = GetOwningPlayer();
+    if (!IsValid(controller))
+    {
+        return;
+    }
+    FInputModeUIOnly inputMode;
+    inputMode.SetWidgetToFocus(mSettingUIWidget->GetCachedWidget());
+    controller->SetInputMode(inputMode);
+    UGameplayStatics::SetGamePaused(GetWorld(), true);
+    AVisualNovelHUD* hud = Cast<AVisualNovelHUD>(controller->GetHUD());
+    if (!IsValid(hud))
+    {
+        return;
+    }
+    UGameplayStatics::PlaySound2D(GetWorld(), hud->GetLogButtonSound());
+}
+
 FDialogInfo UDialogHUD::GetDTInfo()
 {
     FDialogInfo dialoginfo;  
@@ -230,7 +271,6 @@ FDialogInfo UDialogHUD::GetDTInfo()
 void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
 {
     mCharacterNameText->SetText(FText::FromString(EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
-    //mDialogText->SetText(FText::FromString(dialogInfo.DialogText));
     mBGImage->SetBrushFromTexture(dialogInfo.BGImage);
     mLeftSpriteImage->SetBrushFromTexture(dialogInfo.LeftSpriteImage);
     mRightSpriteImage->SetBrushFromTexture(dialogInfo.RightSpriteImage);
@@ -271,9 +311,10 @@ void UDialogHUD::SetLetterByLetter()
 void UDialogHUD::DialogLogic()
 {
     FDialogInfo dialogInfo = GetDTInfo();
-    if(dialogInfo.DialogText.Len()>=mLetterIndex)
+    if(dialogInfo.DialogText[(int32)mGameInstance->Language].Len() >= mLetterIndex)
     {
-        mCurDialogText.AppendChar(dialogInfo.DialogText.GetCharArray()[mLetterIndex]);
+        mCurDialogText.AppendChar(
+            dialogInfo.DialogText[(int32)mGameInstance->Language].GetCharArray()[mLetterIndex]);
         mDialogText->SetText(FText::FromString(mCurDialogText));
         ++mLetterIndex;
         mDialogFinished = false;
@@ -309,7 +350,7 @@ void UDialogHUD::SkipDialog()
     GetWorld()->GetTimerManager().ClearTimer(mLetterTimer);
     mDialogFinished = true;
     mCanSkipDialog = false;
-    mCurDialogText = GetDTInfo().DialogText;
+    mCurDialogText = GetDTInfo().DialogText[(int32)mGameInstance->Language];
     mDialogText->SetText(FText::FromString(mCurDialogText));
     ToggleDialogState(EDialogState::FinishedTyping);
     UGameplayStatics::PlaySound2D(GetWorld(), mSkipSound);
@@ -490,7 +531,8 @@ void UDialogHUD::SetLogData()
     }
     mLogDataWidget->GetLogCharacterNameText()->SetText(FText::FromString(
         EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
-    mLogDataWidget->GetLogDialogText()->SetText(FText::FromString(dialogInfo.DialogText));
+    mLogDataWidget->GetLogDialogText()->SetText(FText::FromString(
+        dialogInfo.DialogText[(int32)mGameInstance->Language]));
     mLogDataWidget->GetHourText()->SetText(FText::FromString(GetHour()));
     mLogDataWidget->GetMinuteText()->SetText(FText::FromString(GetMinute()));
     mLogDataWidget->GetSecondText()->SetText(FText::FromString(GetSecond()));

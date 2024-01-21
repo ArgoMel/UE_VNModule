@@ -6,6 +6,7 @@
 #include <Components/UniformGridPanel.h>
 #include <Components/Button.h>
 #include <Components/Throbber.h>
+#include <Components/ComboBoxString.h>
 #include "EnhancedInputComponent.h"
 #include "VNModule.generated.h"
 
@@ -48,6 +49,15 @@ enum class EDialogState : uint8
 	Choice,
 };
 
+UENUM(BlueprintType)
+enum class ELanguage : uint8
+{
+	Korean,
+	English,
+	//Japanese,
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FChoiceInfo : public FTableRowBase
 {
@@ -73,7 +83,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FChoiceInfo> ChoiceInfo;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString DialogText;
+	TArray<FString> DialogText;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	ECharacterName CharacterName;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

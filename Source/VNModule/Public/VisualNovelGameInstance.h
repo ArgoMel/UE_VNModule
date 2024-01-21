@@ -17,5 +17,9 @@ protected:
 	TObjectPtr<UDataTable>	mDialogInfoTable;
 
 public:
+	UPROPERTY(BlueprintReadWrite)
+	ELanguage Language;
+
+public:
 	const FDialogInfo* FindDialogInfoData(const FName& name);
 };

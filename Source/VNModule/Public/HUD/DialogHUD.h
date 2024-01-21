@@ -7,6 +7,7 @@ class UChoiceButton;
 class UChoicesGridPanel;
 class ULogMain;
 class ULogData;
+class USettingUI;
 class UVisualNovelGameInstance;
 
 UCLASS()
@@ -34,9 +35,11 @@ private:
 	TObjectPtr<UThrobber>	mTypingThrobber;
 	TObjectPtr<UButton>	mLogButton;
 	TObjectPtr<UButton>	mAutoButton;
+	TObjectPtr<UButton>	mSettingButton;
 
 	TSubclassOf<UUserWidget>	mLogDataClass;
 	TSubclassOf<UUserWidget>	mLogMainClass;
+	TSubclassOf<UUserWidget>	mSettingUIClass;
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
 
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
@@ -89,6 +92,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Auto")
 	bool mIsAutoModeOn;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Setting")
+	TObjectPtr<USettingUI>	mSettingUIWidget;
+
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>>	mShakeSound;
     UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
@@ -111,6 +117,8 @@ protected:
 	void AutoButtonHovered();
 	UFUNCTION()
 	void AutoButtonUnHovered();
+	UFUNCTION()
+	void SettingButtonClicked();
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Dialog")
@@ -189,6 +197,10 @@ public:
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();
 
+	bool IsDialogFinished()
+	{
+		return mDialogFinished;
+	}
 	TArray<TObjectPtr<UChoiceButton>> GetChoiceButtons()
 	{
 		return mChoiceButtonWidgets;

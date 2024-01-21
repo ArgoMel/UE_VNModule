@@ -2,6 +2,8 @@
 
 UVisualNovelGameInstance::UVisualNovelGameInstance()
 {
+	Language = ELanguage::Korean;
+
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_DialogInfo(TEXT(
 		"/Game/VisualNovel/Data/DT_DialogInfo.DT_DialogInfo"));
 	if (DT_DialogInfo.Succeeded())
