@@ -19,6 +19,12 @@ UVisualNovelGameInstance::UVisualNovelGameInstance()
 	{
 		mDialogInfoTable = DT_DialogInfo.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UDataTable> DT_DisplayName(TEXT(
+		"/Game/VisualNovel/Data/DT_DisplayName.DT_DisplayName"));
+	if (DT_DisplayName.Succeeded())
+	{
+		mDisplayName = DT_DisplayName.Object;
+	}
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_TextStyle(TEXT(
 		"/Game/VisualNovel/Data/DT_TextStyle.DT_TextStyle"));
 	if (DT_TextStyle.Succeeded())
@@ -36,6 +42,11 @@ void UVisualNovelGameInstance::Init()
 const FDialogInfo* UVisualNovelGameInstance::FindDialogInfoData(const FName& name)
 {
 	return mDialogInfoTable->FindRow<FDialogInfo>(name, TEXT(""));
+}
+
+const FDisplayName* UVisualNovelGameInstance::FindDisplayNameData(const FName& name)
+{
+	return mDisplayName->FindRow<FDisplayName>(name, TEXT(""));
 }
 
 const FRichTextStyleRow* UVisualNovelGameInstance::FindTextStyleData(const FName& name)

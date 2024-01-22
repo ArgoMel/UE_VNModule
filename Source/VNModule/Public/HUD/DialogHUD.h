@@ -199,6 +199,7 @@ public:
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();
 
+	void SetCharacterNameText();
 	void SetFont(FSlateFontInfo font);
 	bool IsDialogFinished()
 	{

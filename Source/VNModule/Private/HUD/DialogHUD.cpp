@@ -276,7 +276,7 @@ FDialogInfo UDialogHUD::GetDTInfo()
 
 void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
 {
-    mCharacterNameText->SetText(FText::FromString(EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
+    SetCharacterNameText();
     mBGImage->SetBrushFromTexture(dialogInfo.BGImage);
     mLeftSpriteImage->SetBrushFromTexture(dialogInfo.LeftSpriteImage);
     mRightSpriteImage->SetBrushFromTexture(dialogInfo.RightSpriteImage);
@@ -537,8 +537,11 @@ void UDialogHUD::SetLogData()
         mLogDataWidget->GetSpriteImage()->SetVisibility(ESlateVisibility::Hidden);
         break;
     }
-    mLogDataWidget->GetLogCharacterNameText()->SetText(FText::FromString(
-        EnumToFString<ECharacterName>(dialogInfo.CharacterName)));
+    mLogDataWidget->GetLogCharacterNameText()->SetFont(mCurFont);
+    mLogDataWidget->GetLogDialogText()->SetFont(mCurFont);
+    FString characterName = FString(mGameInstance->FindDisplayNameData(*EnumToFString<ECharacterName>(
+        dialogInfo.CharacterName))->DisplayNames[(int32)mGameInstance->Language]);
+    mLogDataWidget->GetLogCharacterNameText()->SetText(FText::FromString(characterName));
     mLogDataWidget->GetLogDialogText()->SetText(FText::FromString(
         dialogInfo.DialogText[(int32)mGameInstance->Language]));
     mLogDataWidget->GetHourText()->SetText(FText::FromString(GetHour()));
@@ -642,8 +645,19 @@ void UDialogHUD::NextDialog()
     }
 }
 
+void UDialogHUD::SetCharacterNameText()
+{
+    FString characterName = FString(mGameInstance->FindDisplayNameData(*EnumToFString<ECharacterName>(
+        GetDTInfo().CharacterName))->DisplayNames[(int32)mGameInstance->Language]);
+    mCharacterNameText->SetText(FText::FromString(characterName));
+}
+
 void UDialogHUD::SetFont(FSlateFontInfo font)
 {
+    if(mCurFont==font)
+    {
+        return;
+    }
     mCurFont = font;
     mCharacterNameText->SetFont(font);
     mDialogText->SetFont(font);

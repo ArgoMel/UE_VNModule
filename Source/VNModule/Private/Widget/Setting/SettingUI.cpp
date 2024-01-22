@@ -262,6 +262,7 @@ void USettingUI::LanguageCBChanged(FString SelectedItem, ESelectInfo::Type Selec
 	}
 	FSlateFontInfo fontInfo = mPreviewDialogText->GetFont();
 	dialogHUD->SetFont(fontInfo);
+	dialogHUD->SetCharacterNameText();
 }
 
 void USettingUI::FontCBChanged(FString SelectedItem, ESelectInfo::Type SelectionType)

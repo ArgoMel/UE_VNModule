@@ -51,6 +51,10 @@ else \
 static constexpr FLinearColor LeftSpriteColor(0.85f, 0.04f, 0.07f);
 static constexpr FLinearColor RightSpriteColor(0.9f, 0.4f, 0.35f);
 
+/*
+	개발자 전용 이름
+	나중에 디스플레이 이름으로 언어별로 출력
+*/
 UENUM(BlueprintType)
 enum class ECharacterName : uint8
 {
@@ -148,6 +152,20 @@ public:
 		CharacterSetting = ECharacterSetting::LeftSpriteSpeaking;
 		VisualFX = EVisualFX::NoFX;
 		DialogText.Init(FString(), (int32)ELanguage::Max);
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FDisplayName : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> DisplayNames;
+
+	FDisplayName()
+	{
+		DisplayNames.Init(FString(), (int32)ELanguage::Max);
 	}
 };
 

@@ -19,6 +19,8 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TObjectPtr<UDataTable>	mDialogInfoTable;
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TObjectPtr<UDataTable>	mDisplayName;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TObjectPtr<UDataTable>	mTextStyleTable;
 
 public:
@@ -43,6 +45,7 @@ public:
 
 public:
 	const FDialogInfo* FindDialogInfoData(const FName& name);
+	const FDisplayName* FindDisplayNameData(const FName& name);
 	const FRichTextStyleRow* FindTextStyleData(const FName& name);
 	
 	TArray<FName> GetFontNames()
