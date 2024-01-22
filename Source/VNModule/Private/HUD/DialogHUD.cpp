@@ -303,7 +303,9 @@ void UDialogHUD::SetHUDElements(FDialogInfo dialogInfo)
 
 void UDialogHUD::SetLetterByLetter()
 {
-    GetWorld()->GetTimerManager().SetTimer(mLetterTimer,this,&UDialogHUD::DialogLogic,0.05f,true,0.f);
+    DialogLogic();
+    GetWorld()->GetTimerManager().SetTimer(
+        mLetterTimer,this,&UDialogHUD::DialogLogic,mGameInstance->DialogSpeed,true);
 }
 
 void UDialogHUD::DialogLogic()
@@ -471,8 +473,9 @@ void UDialogHUD::CreateChoices_Implementation()
                 mChoiceButtonWidget->SetButtonIndex(i);
                 mChoiceGridPanel->GetChoices()->AddChildToUniformGrid(mChoiceButtonWidget, i);
                 mChoiceButtonWidgets.Add(mChoiceButtonWidget);
+                mChoiceButtonWidget->GetChoiceText()->SetFont(mCurFont);
                 mChoiceButtonWidget->GetChoiceText()->SetText((
-                    FText::FromString(choiceInfo[i].ChoicesText)));
+                    FText::FromString(choiceInfo[i].ChoicesText[(int32)mGameInstance->Language])));
                 mChoiceButtonWidget->OnCallChoiceButton.AddDynamic(this, &UDialogHUD::ClickChoice);
             }
         }
@@ -629,5 +632,23 @@ void UDialogHUD::NextDialog()
     else
     {
         SkipDialog();
+    }
+}
+
+void UDialogHUD::SetFont(FSlateFontInfo font)
+{
+    mCurFont = font;
+    mCharacterNameText->SetFont(font);
+    mDialogText->SetFont(font);
+    if(mIsChoiceTriggered)
+    {
+        TArray<FChoiceInfo> choiceInfo = GetDTInfo().ChoiceInfo;
+        int32 size = choiceInfo.Num();
+        for (int32 i = 0; i < size; ++i)
+        {
+            mChoiceButtonWidgets[i]->GetChoiceText()->SetFont(mCurFont);
+            mChoiceButtonWidgets[i]->GetChoiceText()->SetText((
+                FText::FromString(choiceInfo[i].ChoicesText[(int32)mGameInstance->Language])));
+        }
     }
 }

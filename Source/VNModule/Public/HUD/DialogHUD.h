@@ -43,6 +43,7 @@ private:
 	TSubclassOf<UUserWidget>	mChoiceButtonClass;
 
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
+	FSlateFontInfo mCurFont;
 
 protected:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
@@ -193,6 +194,7 @@ public:
 	UFUNCTION(BlueprintCallable , Category = "Input")
 	void NextDialog();
 
+	void SetFont(FSlateFontInfo font);
 	bool IsDialogFinished()
 	{
 		return mDialogFinished;
