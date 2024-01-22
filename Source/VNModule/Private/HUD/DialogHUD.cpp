@@ -122,13 +122,12 @@ void UDialogHUD::NativeConstruct()
     mAutoButton->OnUnhovered.AddDynamic(this, &UDialogHUD::AutoButtonUnHovered);
     mSettingButton->OnClicked.AddDynamic(this, &UDialogHUD::SettingButtonClicked);
 
-    RefreshData();
-    SetLetterByLetter();
-    ToggleDialogState(EDialogState::Typing);
-    PlayAnimation(mFadeContinueTextAnim,0.f,0,EUMGSequencePlayMode::Forward,0.5f);
-    UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
-    UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
+    CreateWidgets();
+    InitGame();
+}
 
+void UDialogHUD::CreateWidgets()
+{
     if (IsValid(mLogMainClass))
     {
         mLogMainWidget = CreateWidget<ULogMain>(GetWorld(), mLogMainClass);
@@ -147,7 +146,6 @@ void UDialogHUD::NativeConstruct()
             mSettingUIWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
-
     APlayerController* controller = GetOwningPlayer();
     if (!IsValid(controller))
     {
@@ -157,6 +155,16 @@ void UDialogHUD::NativeConstruct()
     FInputModeGameAndUI inputMode;
     inputMode.SetWidgetToFocus(GetCachedWidget());
     controller->SetInputMode(inputMode);
+}
+
+void UDialogHUD::InitGame()
+{
+    RefreshData();
+    SetLetterByLetter();
+    ToggleDialogState(EDialogState::Typing);
+    PlayAnimation(mFadeContinueTextAnim, 0.f, 0, EUMGSequencePlayMode::Forward, 0.5f);
+    UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
+    UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
 }
 
 void UDialogHUD::LogButtonClicked()
@@ -393,7 +401,6 @@ void UDialogHUD::ToggleBorders(bool bordersOn)
 
 void UDialogHUD::BordersOn()
 {
-    ClearDialog();
     ToggleBorders(true);
     mDisableLMB = false;
 }

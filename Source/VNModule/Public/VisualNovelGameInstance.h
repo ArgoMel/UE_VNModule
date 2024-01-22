@@ -38,6 +38,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Setting|Font")
 	int32 FontSize;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Setting|Sound")
+	TArray<float> Volumes;
+
 public:
 	const FDialogInfo* FindDialogInfoData(const FName& name);
 	const FRichTextStyleRow* FindTextStyleData(const FName& name);

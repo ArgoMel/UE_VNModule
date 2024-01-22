@@ -11,6 +11,8 @@ UVisualNovelGameInstance::UVisualNovelGameInstance()
 
 	FontSize = 24;
 
+	Volumes.Init(1.f, (int32)ESoundKind::Max);
+
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_DialogInfo(TEXT(
 		"/Game/VisualNovel/Data/DT_DialogInfo.DT_DialogInfo"));
 	if (DT_DialogInfo.Succeeded())

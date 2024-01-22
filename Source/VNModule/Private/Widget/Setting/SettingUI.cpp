@@ -3,6 +3,7 @@
 #include "HUD/DialogHUD.h"
 //#include "Interface/HUDInterface.h"
 #include "VisualNovelGameInstance.h"
+#include "AudioDevice.h"
 
 constexpr int32 MinFontSize = 10;
 constexpr int32 MaxFontSize = 40;
@@ -13,6 +14,24 @@ USettingUI::USettingUI(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	mPreviewFont = FString(TEXT("Sample 예시"));
+
+	static ConstructorHelpers::FObjectFinder<USoundMix>	SCM_Sounds(TEXT(
+		"/Game/VisualNovel/Sounds/SoundClass/SCM_Sounds.SCM_Sounds"));
+	if (SCM_Sounds.Succeeded())
+	{
+		mSoundMix=SCM_Sounds.Object;
+	}
+	for (int32 i = 0; i < (int32)ESoundKind::Max;++i) 
+	{
+		const FString name = EnumToFString<ESoundKind>((ESoundKind)i);
+		const FString string = FString::Printf(TEXT(
+			"/Game/VisualNovel/Sounds/SoundClass/SC_%s.SC_%s"), *name, *name);
+		ConstructorHelpers::FObjectFinder<USoundClass>	soundClass(*string);
+		if (soundClass.Succeeded())
+		{
+			mSoundClasses.Emplace(soundClass.Object);
+		}
+	}
 }
 
 void USettingUI::NativeOnInitialized()
@@ -95,7 +114,11 @@ void USettingUI::NativeConstruct()
 	mDialogSpeedSlider->SetValue(displayValue);
 	DialogSpeedSliderChanged(displayValue);
 	ApplyFontSize();
-	//UGameplayStatics::SetBaseSoundMix(GetWorld(),);
+	UGameplayStatics::SetBaseSoundMix(GetWorld(), mSoundMix);
+	MasterVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Master]);
+	MusicVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Music]);
+	SFXVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::SFX]);
+	VoiceVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Voice]);
 }
 
 void USettingUI::ApplyButtonClicked()
@@ -160,19 +183,38 @@ void USettingUI::DialogSpeedSliderChanged(float value)
 
 void USettingUI::MasterVolumeSliderChanged(float value)
 {
-	//UGameplayStatics::SetSoundMixClassOverride(GetWorld(),);
+	UGameplayStatics::SetSoundMixClassOverride(
+		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Master], value);
+	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
+	mMasterVolumeText->SetText(FText::FromString(string));
+	mGameInstance->Volumes[(int32)ESoundKind::Master]=value;
 }
 
 void USettingUI::MusicVolumeSliderChanged(float value)
 {
+	UGameplayStatics::SetSoundMixClassOverride(
+		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Music], value);
+	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
+	mMusicVolumeText->SetText(FText::FromString(string));
+	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
 }
 
 void USettingUI::SFXVolumeSliderChanged(float value)
 {
+	UGameplayStatics::SetSoundMixClassOverride(
+		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::SFX], value);
+	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
+	mSFXVolumeText->SetText(FText::FromString(string));
+	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
 }
 
 void USettingUI::VoiceVolumeSliderChanged(float value)
 {
+	UGameplayStatics::SetSoundMixClassOverride(
+		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Voice], value);
+	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
+	mVoiceVolumeText->SetText(FText::FromString(string));
+	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
 }
 
 void USettingUI::DialogSpeedSliderEnd()

@@ -39,6 +39,8 @@ private:
 	TObjectPtr<USlider> mVoiceVolumeSlider;
 
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
+	TObjectPtr<USoundMix>	mSoundMix;
+	TArray<TObjectPtr<USoundClass>>	mSoundClasses;
 
 protected:
 	UPROPERTY(meta = (BindWidget))

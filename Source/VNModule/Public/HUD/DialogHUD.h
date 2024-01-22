@@ -117,6 +117,11 @@ protected:
 	UFUNCTION()
 	void SettingButtonClicked();
 
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void CreateWidgets();
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void InitGame();
+
 public:
 	UFUNCTION(BlueprintPure, Category = "Dialog")
 	FDialogInfo GetDTInfo();

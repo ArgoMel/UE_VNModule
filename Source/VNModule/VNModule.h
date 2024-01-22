@@ -93,6 +93,16 @@ enum class ELanguage : uint8
 	Max,
 };
 
+UENUM(BlueprintType)
+enum class ESoundKind : uint8
+{
+	Master,
+	Music,
+	SFX,
+	Voice,
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FChoiceInfo : public FTableRowBase
 {
