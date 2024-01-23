@@ -6,6 +6,7 @@
 #include "Widget/Log/LogData.h"
 #include "Widget/Log/LogGridPanel.h"
 #include "Widget/Setting/SettingUI.h"
+#include "Save/VNSaveGame.h"
 #include "VisualNovelGameInstance.h"
 
 UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
@@ -22,6 +23,7 @@ UDialogHUD::UDialogHUD(const FObjectInitializer& ObjectInitializer)
 
     mLogIndex = 0;
 
+    mAutoModeDuration = 4.f;
     mIsAutoModeOn = false;
 
     static ConstructorHelpers::FClassFinder<UUserWidget>	WBP_LogMain(TEXT(
@@ -96,6 +98,7 @@ void UDialogHUD::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
     mGameInstance = GetWorld()->GetGameInstance<UVisualNovelGameInstance>();
+    mSaveGame = Cast<UVNSaveGame>(UGameplayStatics::CreateSaveGameObject(UVNSaveGame::StaticClass()));
 }
 
 void UDialogHUD::NativeConstruct()
@@ -115,15 +118,20 @@ void UDialogHUD::NativeConstruct()
     mLogButton = Cast<UButton>(GetWidgetFromName(TEXT("Log_Button")));
     mAutoButton = Cast<UButton>(GetWidgetFromName(TEXT("Auto_Button")));
     mSettingButton = Cast<UButton>(GetWidgetFromName(TEXT("Setting_Button")));
+    mSaveButton = Cast<UButton>(GetWidgetFromName(TEXT("Save_Button")));
+    mLoadButton = Cast<UButton>(GetWidgetFromName(TEXT("Load_Button")));
 
     mLogButton->OnClicked.AddDynamic(this, &UDialogHUD::LogButtonClicked);
     mAutoButton->OnClicked.AddDynamic(this, &UDialogHUD::AutoButtonClicked);
     mAutoButton->OnHovered.AddDynamic(this, &UDialogHUD::AutoButtonHovered);
     mAutoButton->OnUnhovered.AddDynamic(this, &UDialogHUD::AutoButtonUnHovered);
     mSettingButton->OnClicked.AddDynamic(this, &UDialogHUD::SettingButtonClicked);
+    mSaveButton->OnClicked.AddDynamic(this, &UDialogHUD::SaveGame);
+    mLoadButton->OnClicked.AddDynamic(this, &UDialogHUD::LoadGame);
 
     CreateWidgets();
     InitGame();
+    LoadGame();
 }
 
 void UDialogHUD::CreateWidgets()
@@ -165,6 +173,40 @@ void UDialogHUD::InitGame()
     PlayAnimation(mFadeContinueTextAnim, 0.f, 0, EUMGSequencePlayMode::Forward, 0.5f);
     UGameplayStatics::PlaySound2D(GetWorld(), mBGSound);
     UGameplayStatics::PlaySound2D(GetWorld(), mMusicSound);
+}
+
+void UDialogHUD::SaveGame()
+{
+    mSaveGame->SavedRowNumber = mRowNumber;
+    UGameplayStatics::SaveGameToSlot(mSaveGame, mSaveGame->SlotName, mSaveGame->UserIndex);
+}
+
+void UDialogHUD::LoadGame()
+{
+    UVNSaveGame* load = Cast<UVNSaveGame>(UGameplayStatics::LoadGameFromSlot(
+        mSaveGame->SlotName, mSaveGame->UserIndex));
+    if(!IsValid(load))
+    {
+		UE_LOG(LogTemp, Warning, TEXT("no save data , %s, %i"), *mSaveGame->SlotName, mSaveGame->UserIndex);
+        return;
+    }
+    mRowNumber = FMath::Max(load->SavedRowNumber,1);
+    GenerateLogData();
+    ClearDialog();
+    SkipDialog();
+    FDialogInfo dialogInfo = GetDTInfo();
+    SetHUDElements(dialogInfo);
+    //로드할때 선택지가 있으면 선택지 갱신
+    if(!dialogInfo.ChoiceInfo.IsEmpty())
+    {
+        CreateChoices();
+    }
+    //현재 선택지는 없으나 이전 데이터에 선택지가 있는 경우 선택지 UI 제거
+    else if(mIsChoiceTriggered)
+    {
+        mChoiceGridPanel->GetChoices()->ClearChildren();
+        mIsChoiceTriggered = false;
+    }
 }
 
 void UDialogHUD::LogButtonClicked()
@@ -560,20 +602,19 @@ void UDialogHUD::AutoModeStart_Implementation()
 
 void UDialogHUD::AutoModeCountdown_Implementation()
 {
-    int32 autoModeDuration = (int32)mGameInstance->AutoModeDuration-1;
+    --mAutoModeDuration;
     FString string;
-    if(autoModeDuration ==0)
+    if(mAutoModeDuration ==0.f)
     {
         string = FString(TEXT("다음 대사로 넘어가는 중..."));
     }
     else
     {
-        string = FString::Printf(TEXT("%02i"), autoModeDuration);
+        string = FString::Printf(TEXT("%02i"), (int32)mAutoModeDuration);
     }
     mAutoSkipDurationText->SetText(FText::FromString(string));
-    mGameInstance->AutoModeDuration = autoModeDuration;
     ToggleTimeRemainingText();
-    if(autoModeDuration <0)
+    if(mAutoModeDuration <0.f)
     {
         ClearAndResetAutoCountdown();
         NextDialog();
@@ -583,7 +624,7 @@ void UDialogHUD::AutoModeCountdown_Implementation()
 void UDialogHUD::ClearAndResetAutoCountdown()
 {
     GetWorld()->GetTimerManager().ClearTimer(mAutoModeTimer);
-    mGameInstance->AutoModeDuration = mGameInstance->ResetAutoModeDuration;
+    mAutoModeDuration = mGameInstance->AutoModeDuration;
     mTimeRemainingText->SetVisibility(ESlateVisibility::Collapsed);
     mAutoSkipDurationText->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -672,4 +713,5 @@ void UDialogHUD::SetFont(FSlateFontInfo font)
                 FText::FromString(choiceInfo[i].ChoicesText[(int32)mGameInstance->Language])));
         }
     }
+    //logmain을 불러서 쓰레드로 로그의 폰트와 글자를 변경해야함
 }

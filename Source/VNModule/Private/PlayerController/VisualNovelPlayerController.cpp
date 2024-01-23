@@ -27,8 +27,6 @@ AVisualNovelPlayerController::AVisualNovelPlayerController()
 void AVisualNovelPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	FInputModeGameAndUI inputMode;
-	SetInputMode(inputMode);
 	mVNHUD = Cast<AVisualNovelHUD>(GetHUD());
 }
 

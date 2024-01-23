@@ -1,4 +1,5 @@
 #include "VisualNovelGameInstance.h"
+#include "Save/VNSaveSetting.h"
 
 UVisualNovelGameInstance::UVisualNovelGameInstance()
 {
@@ -7,7 +8,6 @@ UVisualNovelGameInstance::UVisualNovelGameInstance()
 	Language = ELanguage::Korean;
 
 	AutoModeDuration = 4.f;
-	ResetAutoModeDuration = AutoModeDuration;
 
 	FontSize = 24;
 
@@ -37,6 +37,8 @@ void UVisualNovelGameInstance::Init()
 {
 	Super::Init();
 	mFontNames = mTextStyleTable->GetRowNames();
+	mSaveSetting= Cast<UVNSaveSetting>(UGameplayStatics::CreateSaveGameObject(UVNSaveSetting::StaticClass()));
+	LoadSetting();
 }
 
 const FDialogInfo* UVisualNovelGameInstance::FindDialogInfoData(const FName& name)
@@ -52,4 +54,33 @@ const FDisplayName* UVisualNovelGameInstance::FindDisplayNameData(const FName& n
 const FRichTextStyleRow* UVisualNovelGameInstance::FindTextStyleData(const FName& name)
 {
 	return mTextStyleTable->FindRow<FRichTextStyleRow>(name, TEXT(""));
+}
+
+void UVisualNovelGameInstance::SaveSetting()
+{
+	mSaveSetting->Volumes = Volumes;
+	mSaveSetting->Language = Language;
+	mSaveSetting->FontName = FontName;
+	mSaveSetting->FontSize = FontSize;
+	mSaveSetting->DialogSpeed = DialogSpeed;
+	mSaveSetting->AutoModeDuration = AutoModeDuration;
+	UGameplayStatics::SaveGameToSlot(mSaveSetting, mSaveSetting->SlotName, mSaveSetting->UserIndex);
+}
+
+void UVisualNovelGameInstance::LoadSetting()
+{
+	UVNSaveSetting* load = Cast<UVNSaveSetting>(UGameplayStatics::LoadGameFromSlot(
+		mSaveSetting->SlotName, mSaveSetting->UserIndex));
+	if (!IsValid(load))
+	{
+		UE_LOG(LogTemp, Warning, TEXT(
+			"no save data , %s, %i"), *mSaveSetting->SlotName, mSaveSetting->UserIndex);
+		return;
+	}
+	Volumes = load->Volumes;
+	Language = load->Language;
+	FontName = load->FontName;
+	FontSize = load->FontSize;
+	DialogSpeed = load->DialogSpeed;
+	AutoModeDuration = load->AutoModeDuration;
 }

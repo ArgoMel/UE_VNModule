@@ -18,6 +18,8 @@ protected:
 	virtual void NativeConstruct() override;
 
 private:
+	TArray<TObjectPtr<UTextBlock>> mVolumeTexts;
+	TArray<TObjectPtr<USlider>> mVolumeSliders;
 	TObjectPtr<UButton> mApplyButton;
 	TObjectPtr<UButton> mCloseButton;
 	TObjectPtr<UButton> mAutoDecreaseButton;
@@ -28,19 +30,9 @@ private:
 	TObjectPtr<UTextBlock> mDialogSpeedValueText;
 	TObjectPtr<UTextBlock> mFontSizeText;
 	TObjectPtr<UTextBlock> mPreviewDialogText;
-	TObjectPtr<UTextBlock> mMasterVolumeText;
-	TObjectPtr<UTextBlock> mMusicVolumeText;
-	TObjectPtr<UTextBlock> mSFXVolumeText;
-	TObjectPtr<UTextBlock> mVoiceVolumeText;
 	TObjectPtr<USlider> mDialogSpeedSlider;
-	TObjectPtr<USlider> mMasterVolumeSlider;
-	TObjectPtr<USlider> mMusicVolumeSlider;
-	TObjectPtr<USlider> mSFXVolumeSlider;
-	TObjectPtr<USlider> mVoiceVolumeSlider;
 
 	TObjectPtr<UVisualNovelGameInstance>	mGameInstance;
-	TObjectPtr<USoundMix>	mSoundMix;
-	TArray<TObjectPtr<USoundClass>>	mSoundClasses;
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -85,6 +77,8 @@ protected:
 	void SetAutoDurationText();
 	UFUNCTION(BlueprintCallable)
 	void ApplyFontSize();
+	UFUNCTION(BlueprintCallable)
+	void SetVolume(float value, int32 index);
 
 	UFUNCTION(BlueprintPure)
 	FString CalculateFontSize();

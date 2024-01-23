@@ -9,6 +9,7 @@ class ULogMain;
 class ULogData;
 class USettingUI;
 class UVisualNovelGameInstance;
+class UVNSaveGame;
 
 UCLASS()
 class VNMODULE_API UDialogHUD : public UUserWidget
@@ -36,6 +37,8 @@ private:
 	TObjectPtr<UButton>	mLogButton;
 	TObjectPtr<UButton>	mAutoButton;
 	TObjectPtr<UButton>	mSettingButton;
+	TObjectPtr<UButton>	mSaveButton;
+	TObjectPtr<UButton>	mLoadButton;
 
 	TSubclassOf<UUserWidget>	mLogDataClass;
 	TSubclassOf<UUserWidget>	mLogMainClass;
@@ -87,10 +90,14 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Auto")
 	FTimerHandle mAutoModeTimer;
 	UPROPERTY(BlueprintReadWrite, Category = "Auto")
+	float mAutoModeDuration;
+	UPROPERTY(BlueprintReadWrite, Category = "Auto")
 	bool mIsAutoModeOn;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Setting")
 	TObjectPtr<USettingUI>	mSettingUIWidget;
+	UPROPERTY(BlueprintReadWrite, Category = "Setting")
+	TObjectPtr<UVNSaveGame>	mSaveGame;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>>	mShakeSound;
@@ -121,6 +128,10 @@ protected:
 	void CreateWidgets();
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	void InitGame();
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void SaveGame();
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void LoadGame();
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Dialog")
@@ -204,6 +215,10 @@ public:
 	bool IsDialogFinished()
 	{
 		return mDialogFinished;
+	}
+	void SetAutoModeDuration(float value)
+	{
+		mAutoModeDuration = value;
 	}
 	TArray<TObjectPtr<UChoiceButton>> GetChoiceButtons()
 	{

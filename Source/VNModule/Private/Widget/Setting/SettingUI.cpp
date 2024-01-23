@@ -3,7 +3,6 @@
 #include "HUD/DialogHUD.h"
 //#include "Interface/HUDInterface.h"
 #include "VisualNovelGameInstance.h"
-#include "AudioDevice.h"
 
 constexpr int32 MinFontSize = 10;
 constexpr int32 MaxFontSize = 40;
@@ -14,24 +13,6 @@ USettingUI::USettingUI(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	mPreviewFont = FString(TEXT("Sample 예시"));
-
-	static ConstructorHelpers::FObjectFinder<USoundMix>	SCM_Sounds(TEXT(
-		"/Game/VisualNovel/Sounds/SoundClass/SCM_Sounds.SCM_Sounds"));
-	if (SCM_Sounds.Succeeded())
-	{
-		mSoundMix=SCM_Sounds.Object;
-	}
-	for (int32 i = 0; i < (int32)ESoundKind::Max;++i) 
-	{
-		const FString name = EnumToFString<ESoundKind>((ESoundKind)i);
-		const FString string = FString::Printf(TEXT(
-			"/Game/VisualNovel/Sounds/SoundClass/SC_%s.SC_%s"), *name, *name);
-		ConstructorHelpers::FObjectFinder<USoundClass>	soundClass(*string);
-		if (soundClass.Succeeded())
-		{
-			mSoundClasses.Emplace(soundClass.Object);
-		}
-	}
 }
 
 void USettingUI::NativeOnInitialized()
@@ -47,7 +28,6 @@ void USettingUI::NativePreConstruct()
 	{
 		Language_CB->AddOption(EnumToFString<ELanguage>((ELanguage)i));
 	}
-	Language_CB->SetSelectedOption(Language_CB->GetOptionAtIndex(0));
 
 	if(!IsValid(mGameInstance))
 	{
@@ -58,12 +38,16 @@ void USettingUI::NativePreConstruct()
 	{
 		Font_CB->AddOption(fontName.ToString());
 	}
-	Font_CB->SetSelectedOption(Font_CB->GetOptionAtIndex(0));
+	Font_CB->SetSelectedOption(mGameInstance->FontName.ToString());
 }
 
 void USettingUI::NativeConstruct()
 {
 	Super::NativeConstruct();
+	mVolumeTexts.Add(Cast<UTextBlock>(GetWidgetFromName(TEXT("MasterVolumeValue_Text"))));
+	mVolumeTexts.Add(Cast<UTextBlock>(GetWidgetFromName(TEXT("MusicVolumeValue_Text"))));
+	mVolumeTexts.Add(Cast<UTextBlock>(GetWidgetFromName(TEXT("SFXVolumeValue_Text"))));
+	mVolumeTexts.Add(Cast<UTextBlock>(GetWidgetFromName(TEXT("VoiceVolumeValue_Text"))));
 	mApplyButton = Cast<UButton>(GetWidgetFromName(TEXT("Apply_Button")));
 	mCloseButton = Cast<UButton>(GetWidgetFromName(TEXT("Close_Button")));
 	mAutoDecreaseButton = Cast<UButton>(GetWidgetFromName(TEXT("DecDuration_Button")));
@@ -74,15 +58,11 @@ void USettingUI::NativeConstruct()
 	mDialogSpeedValueText = Cast<UTextBlock>(GetWidgetFromName(TEXT("DialogSpeedValue_Text")));
 	mFontSizeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("FontSize_Text")));
 	mPreviewDialogText = Cast<UTextBlock>(GetWidgetFromName(TEXT("PreviewDialog_Text")));
-	mMasterVolumeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("MasterVolumeValue_Text")));
-	mMusicVolumeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("MusicVolumeValue_Text")));
-	mSFXVolumeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("SFXVolumeValue_Text")));
-	mVoiceVolumeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("VoiceVolumeValue_Text")));
 	mDialogSpeedSlider = Cast<USlider>(GetWidgetFromName(TEXT("DialogSpeed_Slider")));
-	mMasterVolumeSlider = Cast<USlider>(GetWidgetFromName(TEXT("MasterVolume_Slider")));
-	mMusicVolumeSlider = Cast<USlider>(GetWidgetFromName(TEXT("MusicVolume_Slider")));
-	mSFXVolumeSlider = Cast<USlider>(GetWidgetFromName(TEXT("SFXVolume_Slider")));
-	mVoiceVolumeSlider = Cast<USlider>(GetWidgetFromName(TEXT("VoiceVolume_Slider")));
+	mVolumeSliders.Add(Cast<USlider>(GetWidgetFromName(TEXT("MasterVolume_Slider"))));
+	mVolumeSliders.Add(Cast<USlider>(GetWidgetFromName(TEXT("MusicVolume_Slider"))));
+	mVolumeSliders.Add(Cast<USlider>(GetWidgetFromName(TEXT("SFXVolume_Slider"))));
+	mVolumeSliders.Add(Cast<USlider>(GetWidgetFromName(TEXT("VoiceVolume_Slider"))));
 
 	mApplyButton->OnClicked.AddDynamic(this, &USettingUI::ApplyButtonClicked);
 	mCloseButton->OnClicked.AddDynamic(this, &USettingUI::CloseButtonClicked);
@@ -94,10 +74,14 @@ void USettingUI::NativeConstruct()
 	//mCountdownDurationText->TextDelegate.BindDynamic(this, &USettingUI::SetAutoDurationText);
 	mDialogSpeedSlider->OnValueChanged.AddDynamic(this,&USettingUI::DialogSpeedSliderChanged);
 	mDialogSpeedSlider->OnMouseCaptureEnd.AddDynamic(this,&USettingUI::DialogSpeedSliderEnd);
-	mMasterVolumeSlider->OnValueChanged.AddDynamic(this, &USettingUI::MasterVolumeSliderChanged);
-	mMusicVolumeSlider->OnValueChanged.AddDynamic(this, &USettingUI::MusicVolumeSliderChanged);
-	mSFXVolumeSlider->OnValueChanged.AddDynamic(this, &USettingUI::SFXVolumeSliderChanged);
-	mVoiceVolumeSlider->OnValueChanged.AddDynamic(this, &USettingUI::VoiceVolumeSliderChanged);
+	mVolumeSliders[(int32)ESoundKind::Master]->OnValueChanged.AddDynamic(
+		this, &USettingUI::MasterVolumeSliderChanged);
+	mVolumeSliders[(int32)ESoundKind::Music]->OnValueChanged.AddDynamic(
+		this, &USettingUI::MusicVolumeSliderChanged);
+	mVolumeSliders[(int32)ESoundKind::SFX]->OnValueChanged.AddDynamic(
+		this, &USettingUI::SFXVolumeSliderChanged);
+	mVolumeSliders[(int32)ESoundKind::Voice]->OnValueChanged.AddDynamic(
+		this, &USettingUI::VoiceVolumeSliderChanged);
 	Language_CB->OnSelectionChanged.AddDynamic(this,&USettingUI::LanguageCBChanged);
 	Font_CB->OnSelectionChanged.AddDynamic(this,&USettingUI::FontCBChanged);
 
@@ -109,16 +93,16 @@ void USettingUI::NativeConstruct()
 		controller->SetInputMode(inputMode);
 	}
 
+	Language_CB->SetSelectedOption(Language_CB->GetOptionAtIndex((int32)mGameInstance->Language));
 	SetAutoDurationText();
 	float displayValue = mDialogSpeedSlider->GetMinValue() / mGameInstance->DialogSpeed;
 	mDialogSpeedSlider->SetValue(displayValue);
 	DialogSpeedSliderChanged(displayValue);
-	ApplyFontSize();
-	UGameplayStatics::SetBaseSoundMix(GetWorld(), mSoundMix);
-	MasterVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Master]);
-	MusicVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Music]);
-	SFXVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::SFX]);
-	VoiceVolumeSliderChanged(mGameInstance->Volumes[(int32)ESoundKind::Voice]);
+	FontCBChanged(mGameInstance->FontName.ToString(),ESelectInfo::Type::Direct);
+	for (int32 i = 0; i < (int32)ESoundKind::Max; ++i)
+	{
+		mVolumeSliders[i]->SetValue(mGameInstance->Volumes[i]);
+	}
 }
 
 void USettingUI::ApplyButtonClicked()
@@ -128,6 +112,7 @@ void USettingUI::ApplyButtonClicked()
 
 void USettingUI::CloseButtonClicked()
 {
+	mGameInstance->SaveSetting();
 	SetVisibility(ESlateVisibility::Collapsed);
 	APlayerController* controller = GetOwningPlayer();
 	if (!IsValid(controller))
@@ -146,17 +131,15 @@ void USettingUI::CloseButtonClicked()
 
 void USettingUI::AutoDecreaseButtonClicked()
 {
-	mGameInstance->ResetAutoModeDuration = 
-		FMath::Clamp(mGameInstance->ResetAutoModeDuration-1,MinAutoDuration, MaxAutoDuration);
-	mGameInstance->AutoModeDuration= mGameInstance->ResetAutoModeDuration;
+	mGameInstance->AutoModeDuration = 
+		FMath::Clamp(mGameInstance->AutoModeDuration -1,MinAutoDuration, MaxAutoDuration);
 	SetAutoDurationText();
 }
 
 void USettingUI::AutoIncreaseButtonClicked()
 {
-	mGameInstance->ResetAutoModeDuration =
-		FMath::Clamp(mGameInstance->ResetAutoModeDuration + 1, MinAutoDuration, MaxAutoDuration);
-	mGameInstance->AutoModeDuration = mGameInstance->ResetAutoModeDuration;
+	mGameInstance->AutoModeDuration =
+		FMath::Clamp(mGameInstance->AutoModeDuration + 1, MinAutoDuration, MaxAutoDuration);
 	SetAutoDurationText();
 }
 
@@ -183,38 +166,22 @@ void USettingUI::DialogSpeedSliderChanged(float value)
 
 void USettingUI::MasterVolumeSliderChanged(float value)
 {
-	UGameplayStatics::SetSoundMixClassOverride(
-		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Master], value);
-	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
-	mMasterVolumeText->SetText(FText::FromString(string));
-	mGameInstance->Volumes[(int32)ESoundKind::Master]=value;
+	SetVolume(value,(int32)ESoundKind::Master);
 }
 
 void USettingUI::MusicVolumeSliderChanged(float value)
 {
-	UGameplayStatics::SetSoundMixClassOverride(
-		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Music], value);
-	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
-	mMusicVolumeText->SetText(FText::FromString(string));
-	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
+	SetVolume(value, (int32)ESoundKind::Music);
 }
 
 void USettingUI::SFXVolumeSliderChanged(float value)
 {
-	UGameplayStatics::SetSoundMixClassOverride(
-		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::SFX], value);
-	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
-	mSFXVolumeText->SetText(FText::FromString(string));
-	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
+	SetVolume(value, (int32)ESoundKind::SFX);
 }
 
 void USettingUI::VoiceVolumeSliderChanged(float value)
 {
-	UGameplayStatics::SetSoundMixClassOverride(
-		GetWorld(), mSoundMix, mSoundClasses[(int32)ESoundKind::Voice], value);
-	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
-	mVoiceVolumeText->SetText(FText::FromString(string));
-	mGameInstance->Volumes[(int32)ESoundKind::Master] = value;
+	SetVolume(value, (int32)ESoundKind::Voice);
 }
 
 void USettingUI::DialogSpeedSliderEnd()
@@ -229,8 +196,11 @@ void USettingUI::DialogSpeedSliderEnd()
 
 void USettingUI::SetAutoDurationText()
 {
-	FString string = FString::Printf(TEXT("%02i 초"), (int32)mGameInstance->ResetAutoModeDuration);
+	FString string = FString::Printf(TEXT("%02i 초"), (int32)mGameInstance->AutoModeDuration);
 	mCountdownDurationText->SetText(FText::FromString(string));
+	AVisualNovelHUD* vnHUD = GetVNHUD();
+	UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
+	dialogHUD->SetAutoModeDuration(mGameInstance->AutoModeDuration);
 }
 
 void USettingUI::ApplyFontSize()
@@ -243,6 +213,13 @@ void USettingUI::ApplyFontSize()
 	AVisualNovelHUD* vnHUD = GetVNHUD();
 	UDialogHUD* dialogHUD = vnHUD->GetDialogWidget();
 	dialogHUD->SetFont(fontInfo);
+}
+
+void USettingUI::SetVolume(float value, int32 index)
+{
+	GetVNHUD()->SetVolume(value, index);
+	FString string = FString::Printf(TEXT("%i"), (int32)(value * 100));
+	mVolumeTexts[index]->SetText(FText::FromString(string));
 }
 
 FString USettingUI::CalculateFontSize()

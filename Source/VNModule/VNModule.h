@@ -10,6 +10,7 @@
 #include <Components/ComboBoxString.h>
 #include <Components/Slider.h>
 #include "EnhancedInputComponent.h"
+#include "AudioDevice.h"
 #include "VNModule.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTestDelegate);
