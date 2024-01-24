@@ -177,6 +177,7 @@ void UDialogHUD::InitGame()
 
 void UDialogHUD::SaveGame()
 {
+    mSaveGame->DialogInfoTable = mGameInstance->GetCurDialogDT();
     mSaveGame->SavedRowNumber = mRowNumber;
     UGameplayStatics::SaveGameToSlot(mSaveGame, mSaveGame->SlotName, mSaveGame->UserIndex);
 }
@@ -190,6 +191,7 @@ void UDialogHUD::LoadGame()
 		UE_LOG(LogTemp, Warning, TEXT("no save data , %s, %i"), *mSaveGame->SlotName, mSaveGame->UserIndex);
         return;
     }
+    mGameInstance->SetCurDialogDT(load->DialogInfoTable);
     mRowNumber = FMath::Max(load->SavedRowNumber,1);
     GenerateLogData();
     ClearDialog();
@@ -505,6 +507,15 @@ void UDialogHUD::SetCharacterSettings(bool bIsLeftSpriteHighlighted)
     }
 }
 
+void UDialogHUD::SwitchDataTable(UDataTable* dataTable)
+{
+    mGameInstance->SetCurDialogDT(dataTable);
+    ClearDialog();
+    mRowNumber = 1;
+    RefreshData();
+    SetLetterByLetter();
+}
+
 void UDialogHUD::CreateChoices_Implementation()
 {
     mIsChoiceTriggered = true;
@@ -536,8 +547,18 @@ void UDialogHUD::ClickChoice_Implementation(int32 index)
     mIsChoiceTriggered = false;
     UGameplayStatics::PlaySound2D(GetWorld(), mChoiceSound);
     ToggleDialogState(EDialogState::Typing);
-    int32 choiceindex=GetDTInfo().ChoiceInfo[index].SelectedChoiceRowIndex;
-    ContinueDialog(true, choiceindex);
+    FDialogInfo dialogInfo = GetDTInfo();
+    UDataTable* dt= dialogInfo.ChoiceInfo[index].SwitchDataTable;
+    if(IsValid(dt))
+    {
+        SwitchDataTable(dt);
+    }
+    else
+    {
+        //이동할 인덱스
+        int32 choiceindex = dialogInfo.ChoiceInfo[index].SelectedChoiceRowIndex;
+        ContinueDialog(true, choiceindex);
+    }
 }
 
 void UDialogHUD::SelectChoiceRowIndex(int32 selectedIndex)

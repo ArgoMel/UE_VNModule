@@ -160,6 +160,8 @@ public:
 	void ToggleDialogState(EDialogState state);
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void SetCharacterSettings(bool bIsLeftSpriteHighlighted);
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	void SwitchDataTable(UDataTable* dataTable);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Choice")
 	void CreateChoices();

@@ -19,7 +19,7 @@ private:
 
 protected:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
-	TObjectPtr<UDataTable>	mDialogInfoTable;
+	TObjectPtr<UDataTable>	mCurDialogInfoTable;
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TObjectPtr<UDataTable>	mDisplayName;
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
@@ -55,9 +55,17 @@ public:
 	void SaveSetting();
 	UFUNCTION(BlueprintCallable, Category = "Save")
 	void LoadSetting();
-	
+
 	TArray<FName> GetFontNames()
 	{
 		return mFontNames;
+	}
+	UDataTable* GetCurDialogDT()
+	{
+		return mCurDialogInfoTable;
+	}
+	void SetCurDialogDT(UDataTable* dataTable)
+	{
+		mCurDialogInfoTable = dataTable;
 	}
 };

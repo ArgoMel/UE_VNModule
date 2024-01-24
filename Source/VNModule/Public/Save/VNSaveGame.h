@@ -17,5 +17,7 @@ public:
 	int32 UserIndex;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+	TObjectPtr<UDataTable>	DialogInfoTable;
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	int32 SavedRowNumber;
 };

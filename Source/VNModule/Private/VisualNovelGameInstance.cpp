@@ -17,7 +17,7 @@ UVisualNovelGameInstance::UVisualNovelGameInstance()
 		"/Game/VisualNovel/Data/DT_DialogInfo.DT_DialogInfo"));
 	if (DT_DialogInfo.Succeeded())
 	{
-		mDialogInfoTable = DT_DialogInfo.Object;
+		mCurDialogInfoTable = DT_DialogInfo.Object;
 	}
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_DisplayName(TEXT(
 		"/Game/VisualNovel/Data/DT_DisplayName.DT_DisplayName"));
@@ -43,7 +43,7 @@ void UVisualNovelGameInstance::Init()
 
 const FDialogInfo* UVisualNovelGameInstance::FindDialogInfoData(const FName& name)
 {
-	return mDialogInfoTable->FindRow<FDialogInfo>(name, TEXT(""));
+	return mCurDialogInfoTable->FindRow<FDialogInfo>(name, TEXT(""));
 }
 
 const FDisplayName* UVisualNovelGameInstance::FindDisplayNameData(const FName& name)

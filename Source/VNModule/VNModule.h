@@ -114,7 +114,9 @@ struct FChoiceInfo : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> ChoicesText;
+	TArray<FString> ChoicesText;	//언어별 선택지 텍스트
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UDataTable> SwitchDataTable;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 SelectedChoiceRowIndex;
 
@@ -137,9 +139,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UTexture2D> RightSpriteImage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FChoiceInfo> ChoiceInfo;
+	TArray<FChoiceInfo> ChoiceInfo;	//선택지 개수
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> DialogText;
+	TArray<FString> DialogText;	//언어별로 텍스트 모음
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	ECharacterName CharacterName;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
